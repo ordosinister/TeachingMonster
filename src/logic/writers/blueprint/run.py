@@ -1,4 +1,4 @@
-﻿"""Blueprint generation: creates structured lesson plans from course requirements.
+"""Blueprint generation: creates structured lesson plans from course requirements.
 
 Uses LLM-based pipelines to generate ordered slide sequences with titles,
 content, speaker notes, and transitions. Includes subject classification,
@@ -30,7 +30,7 @@ content, speaker notes, and transitions. Includes subject classification,
 multi-agent feedback loops, and mathematical validation.
 """
 
-from model_orchestration import MODEL_CONFIGURATIONS
+from model_orchestration import get_model_config
 from src.io.path_definition import get_project_dir
 from src.logic import build_standard_chat_prompt_template
 from src.logic.writers.blueprint.generation_pipeline import (create_presentation_pipeline, create_slide_pipeline,
@@ -66,10 +66,10 @@ def main(request_id: str, course_requirement: str, student_persona: str) -> str:
     with open(input_filename, "w", encoding="utf-8") as f:
         json.dump({"course_requirement": course_requirement, "student_persona": student_persona}, f)
 
-    model_main = MODEL_CONFIGURATIONS[env]['main']
-    model_sub = MODEL_CONFIGURATIONS[env]['sub']
+    model_main = get_model_config(env)['main']
+    model_sub = get_model_config(env)['sub']
 
-    background_pipeline = create_background_pipeline(model_main,subject=subject)
+    background_pipeline = create_background_pipeline(model_main, subject=subject)
 
     pedagogical_state = background_pipeline.invoke({
         "course_requirement": course_requirement,
@@ -78,7 +78,7 @@ def main(request_id: str, course_requirement: str, student_persona: str) -> str:
 
     logger.info(f"{request_id} pedagogical_state: {pedagogical_state}")
 
-    presentation_pipeline = create_presentation_pipeline(MODEL_CONFIGURATIONS[env]['master'], subject=subject)
+    presentation_pipeline = create_presentation_pipeline(get_model_config(env)['master'], subject=subject)
 
     logger.info(f"Start drafting {request_id}")
 
@@ -91,28 +91,7 @@ def main(request_id: str, course_requirement: str, student_persona: str) -> str:
             })
             break
         except OutputParserException:
-            pass
-
-    # adaptability_pipeline = create_adaptability_pipeline(model=MODEL_CONFIGURATIONS[env]['main'],
-    #                                                      pydantic_object=AdaptabilityOutput)
-
-    # student_pipeline = create_student_pipeline(model=MODEL_CONFIGURATIONS[env]['sub'])
-
-    # adaptability_pipeline = RunnablePassthrough.assign(student_confusions=student_pipeline)|RunnablePassthrough.assign(slides=adaptability_pipeline)
-
-    # for _ in range(2):
-    #
-    #     while True:
-    #         try:
-    #             logger.info("Running adaptability pipeline...")
-    #
-    #             adapted_output = adaptability_pipeline.invoke({"draft": output.model_dump_json(),
-    #                                                            "course_requirement": course_requirement,
-    #                                                            "student_persona": student_persona})
-    #             output.slides = adapted_output['slides'].slides
-    #             break
-    #         except OutputParserException as e:
-    #             logger.info(f"Adaptability pipeline failed due to {e}")
+            logger.info(f"{request_id} Drafting Parsing Error")
 
     draft_dir = os.path.join(target_dir, "draft")
     if not os.path.isdir(draft_dir):
@@ -147,7 +126,7 @@ def main(request_id: str, course_requirement: str, student_persona: str) -> str:
     with open(drafts_final[-1], "r", encoding="utf-8") as f:
         draft = LessonBlueprint.model_validate_json(f.read())
 
-    slide_pipeline = create_slide_pipeline(model=MODEL_CONFIGURATIONS[env]['master'],
+    slide_pipeline = create_slide_pipeline(model=get_model_config(env)['master'],
                                            subject=subject, pydantic_object=LessonBlueprint)
 
     while True:
@@ -160,14 +139,13 @@ def main(request_id: str, course_requirement: str, student_persona: str) -> str:
                 "pedagogical_state": pedagogical_state
             })
             break
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"request_id: {request_id}, exception: {e}")
 
     # --- Math Verification ---
-    slide_output = run_math_validation(slide_output, target_dir, model_main, model_sub)
+    slide_output = run_math_validation(slide_output, target_dir, env)
 
-
-    slide_output = run_concept_supervision(slide_output, env, model_sub, output_filename)
+    slide_output = run_concept_supervision(slide_output, env, output_filename)
 
     return subject
 
@@ -188,4 +166,4 @@ Functional differences of triangle centers
     student_persona = dedent("""
          Grade: 9th gradeFocus Time: 15 minutesBackground Knowledge: Has: basic definitions of triangle centersLacks: ability to compare and apply concepts in different contexts
           """)
-    main("abcdefgh", course_requirement, student_persona, env="DEV")
+    main("abcdefgh", course_requirement, student_persona, env="")
