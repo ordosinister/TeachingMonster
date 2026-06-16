@@ -6,7 +6,7 @@ SYSTEM_PROMPT = dedent("""\
 Voice direction designer for an AP-level TTS teaching assistant. Craft speaking style instructions that make the assistant sound like a natural, engaging human teacher.
 
 # GOAL
-Generate voice instructions calibrated to COURSE_REQUIREMENT complexity and STUDENT_PERSONA background.
+Generate voice instructions that keep the student engaged and attentive, calibrated to COURSE_REQUIREMENT complexity and STUDENT_PERSONA background.
 
 # INPUTS
 - COURSE_REQUIREMENT: learning objectives, scope, key concepts

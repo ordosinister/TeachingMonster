@@ -97,7 +97,12 @@ def run_math_validation(slide_output, target_dir, env: str):
 
     merge_pipeline = build_standard_chat_prompt_template(merge_input) | model_sub | output_parser
 
-    slide_output = merge_pipeline.invoke({"draft": slide_output.model_dump_json(),
-                                          "math_valid": raw_output})
+    while True:
+        try:
+            slide_output = merge_pipeline.invoke({"draft": slide_output.model_dump_json(),
+                                                  "math_valid": raw_output})
+            break
+        except Exception as e:
+            print(f"Math Validation Merge Failed: {e}")
 
     return slide_output

@@ -8,6 +8,7 @@ when asyncio.run() is called multiple times in the same thread.
 import asyncio
 import os
 import threading
+import weakref
 
 from langchain_openai import ChatOpenAI
 from langchain_ollama import ChatOllama
@@ -19,6 +20,7 @@ from src.ollama_connection import llama_index_ollama
 credential_init()
 
 _event_loop_cache: dict[tuple, dict] = {}
+_loop_refs: dict[int, "weakref.ReferenceType"] = {}
 _cache_lock = threading.Lock()
 
 
@@ -29,21 +31,36 @@ def get_model_config(env: str) -> dict:
     the same asyncio.run() reuse the same objects, while a new asyncio.run()
     (or a call from a sync context) gets fresh instances with clean httpx
     connection pools.
+
+    Uses weakref to verify loop identity, preventing stale cache hits when
+    Python reuses id() values across destroyed and newly created loops.
     """
     try:
-        loop_key = id(asyncio.get_running_loop())
+        loop = asyncio.get_running_loop()
+        loop_id = id(loop)
     except RuntimeError:
         # No running event loop (sync code path)
-        loop_key = None
+        loop = None
+        loop_id = None
 
-    cache_key = (env, loop_key)
+    cache_key = (env, loop_id)
 
     with _cache_lock:
         if cache_key in _event_loop_cache:
-            return _event_loop_cache[cache_key]
+            # Verify the cached loop is still the same object (id may be reused)
+            if loop_id is None:
+                return _event_loop_cache[cache_key]
+            if loop_id in _loop_refs and _loop_refs[loop_id]() is loop:
+                return _event_loop_cache[cache_key]
+            # Stale entry: id was reused for a different loop
+            del _event_loop_cache[cache_key]
+            if loop_id in _loop_refs:
+                del _loop_refs[loop_id]
 
         config = _build_config(env)
         _event_loop_cache[cache_key] = config
+        if loop is not None:
+            _loop_refs[loop_id] = weakref.ref(loop)
         return config
 
 

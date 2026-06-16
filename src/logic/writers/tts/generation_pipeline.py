@@ -10,23 +10,23 @@ from src.logic.writers.tts import SYSTEM_PROMPT
 
 def create_presentation_pipeline(model) -> Runnable:
 
- system_message = SystemMessage(content=SYSTEM_PROMPT)
- human_prompt = PromptTemplate(template=dedent("""
- <COURSE_REQUIREMENT>: {course_requirement}
- <STUDENT_PERSONA>: {student_persona}>
- """),
- input_variables=["course_requirement", "student_persona"]
- )
+     system_message = SystemMessage(content=SYSTEM_PROMPT)
+     human_prompt = PromptTemplate(template=dedent("""
+     <COURSE_REQUIREMENT>: {course_requirement}
+     <STUDENT_PERSONA>: {student_persona}>
+     """),
+     input_variables=["course_requirement", "student_persona"]
+     )
 
- human_message = HumanMessagePromptTemplate(prompt=human_prompt)
+     human_message = HumanMessagePromptTemplate(prompt=human_prompt)
 
- chat_prompt = ChatPromptTemplate.from_messages([system_message,
- human_message
- ])
+     chat_prompt = ChatPromptTemplate.from_messages([system_message,
+     human_message
+     ])
 
- pipeline = chat_prompt | model | StrOutputParser()
+     pipeline = chat_prompt | model | StrOutputParser()
 
- return pipeline
+     return pipeline
 
 
 if __name__ == "__main__":

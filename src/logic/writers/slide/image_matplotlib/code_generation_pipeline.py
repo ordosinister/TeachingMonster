@@ -1,4 +1,4 @@
-from textwrap import dedent
+﻿from textwrap import dedent
 
 from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
@@ -96,15 +96,33 @@ Examples:
 
 # LaTeX Rules
 
-- ALL math expressions must use raw LaTeX strings:
-    r"$\\Delta x$" 
-    r"$\\frac{{a}}{{b}}$"
-
+- ALL math expressions must use raw LaTeX strings (r"...").
 - Never place LaTeX in normal strings.
+
+- In raw strings, every LaTeX command uses exactly ONE backslash:
+    r"$\Delta x$"        <- correct: single backslash before \Delta
+    r"$\frac{{a}}{{b}}$" <- correct: single backslash before \frac, braces doubled for LangChain
+    r"$\\Delta x$"       <- WRONG: \\ is two literal backslashes in a raw string, LaTeX will fail
+
+- The ONLY characters that need doubling are curly braces (for LangChain template safety):
+    {{  and  }}
+- Backslashes are NEVER doubled in raw strings.
 
 - For dynamically generated LaTeX:
   - Prefer simple concatenation.
   - Avoid nested formatting or template-style braces.
+
+# LaTeX in Annotations
+
+Use `ax.annotate` with raw LaTeX strings for labeling specific points on plots:
+
+  ax.annotate(r"$e^{{0.1}} \approx 1.105170$", xy=(0.1, np.exp(0.1)), xytext=(0.25, 1.2),
+              arrowprops=dict(arrowstyle="->", color="blue", lw=1),
+              fontsize=10, color="blue")
+
+- Always pass LaTeX expressions as raw strings (r"...") inside `ax.annotate`.
+- Use `xy` for the point being labeled and `xytext` for the label position.
+- Use `arrowprops` to draw a connecting arrow; style with `arrowstyle` and `color`.
 
 # LangChain / Template Safety
 
@@ -151,6 +169,9 @@ Unsupported examples:
 - Do not omit required modules.
 - Avoid deprecated matplotlib APIs.
 - Ensure generated code executes successfully in a clean Python environment.
+
+# Output
+A json object following the provided Output format instruction
 """)
 
 
@@ -162,7 +183,7 @@ def create_matplotlib_code_pipeline(model):
     human_template = dedent("""
     <PROMPT>: {prompt}
 
-    Output Format Instruction: {format_instructions}
+    Output format instruction: {format_instructions}
     """)
 
     text_prompt_template = {"template": human_template,
@@ -176,7 +197,7 @@ def create_matplotlib_code_pipeline(model):
 
     chat_prompt_template = build_standard_chat_prompt_template(input_)
 
-    pipeline = chat_prompt_template | model | output_parser
+    pipeline = chat_prompt_template | model# | output_parser
 
-    return pipeline
+    return pipeline, output_parser
 

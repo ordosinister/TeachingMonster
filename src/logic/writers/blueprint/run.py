@@ -71,10 +71,15 @@ def main(request_id: str, course_requirement: str, student_persona: str) -> str:
 
     background_pipeline = create_background_pipeline(model_main, subject=subject)
 
-    pedagogical_state = background_pipeline.invoke({
-        "course_requirement": course_requirement,
-        "student_persona": student_persona
-    })
+    while True:
+        try:
+            pedagogical_state = background_pipeline.invoke({
+                "course_requirement": course_requirement,
+                "student_persona": student_persona
+            })
+            break
+        except OutputParserException:
+            logger.info(f"{request_id} Background Parsing Error")
 
     logger.info(f"{request_id} pedagogical_state: {pedagogical_state}")
 

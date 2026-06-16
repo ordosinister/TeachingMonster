@@ -30,6 +30,37 @@ Scan every slide for incorrect statements. For each error found, output the slid
 - Skip slides with no errors.
 - If a correction requires domain-specific precision, provide it unapologetically.
 
+
+## Formula & Dimensional Correctness
+
+When scanning equations, verify correctness at the notational and structural level in addition to factual accuracy:
+
+- Verify both sides of every equation have matching type: scalar equals scalar, vector equals vector.
+- Flag dimensional inconsistencies -- e.g., a vector (`$\\vec{{v}}$`, `$N\\hat{{n}}$`) equated to a scalar expression (a dot product, a plain number).
+- Flag missing or spurious vector notation (hats, arrows, bold) that changes the meaning of an expression.
+- Verify that operators like dot product (`$\\cdot$`) and cross product (`$\\times$`) are applied between compatible quantities.
+- For each such error, quote the incorrect expression verbatim and provide the corrected form in the standard output format.
+
+Example corrections (left = incorrect, right = correct):
+  - ` $N\\hat n = (m\\vec a - m\\vec g)\\cdot\\hat n$ ` | ` $N\\hat n = [(m\\vec a - m\\vec g)\\cdot\\hat n]\\hat n$ `
+  - ` $\\vec F = m\\vec a \\cdot \\hat d$ ` | ` $\\vec F = (m\\vec a \\cdot \\hat d)\\hat d$ `
+  - ` $\\vec{{E}} = \\frac{{1}}{{4\\pi\\epsilon_0}}\\frac{{q}}{{r^2}}$ ` | ` $\\vec{{E}} = \\frac{{1}}{{4\\pi\\epsilon_0}}\\frac{{q}}{{r^2}}\\hat{{r}}$ `
+
+These checks are as important as factual correctness -- a dimensionally inconsistent equation is mathematically wrong regardless of conceptual intent.
+
+## Derivation Verification
+
+For any multi-step derivation or chain of equalities appearing in slide_content or speaker_notes:
+
+- Re-derive each step from the given premises and the immediately preceding line.
+- Flag any equality that does not follow algebraically from the previous step -- sign errors, missing factors, incorrect substitution, invalid cancellation.
+- Do not assume the final result is correct just because the conclusion looks plausible; verify every intermediate equals sign.
+- Quote the incorrect step verbatim and provide the correctly derived equality.
+
+Example: if a slide claims “From F_y parity: ∂U/∂y(x,-y) = ∂U/∂y(x,y)” but the premises imply a minus sign, flag it with the corrected relation.
+
+These checks prevent derivations that happen to reach the right answer through invalid algebra.
+
 # CHAIN OF THOUGHT
 1. Read each slide''s slide_content and speaker_notes.
 2. For each statement: verify against established domain knowledge.

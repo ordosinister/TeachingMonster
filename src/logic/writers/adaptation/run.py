@@ -1,4 +1,4 @@
-"""Adaptation layer: rewrites slide content to match student persona.
+﻿"""Adaptation layer: rewrites slide content to match student persona.
 
 Takes a raw lesson blueprint and adapts vocabulary, sentence complexity,
 pacing, and scaffolding to the target student's grade level and background
@@ -112,6 +112,7 @@ The final result should feel like:
 - Preserve terminology that students are expected to learn, but define it naturally when needed.
 - Do not over-explain concepts already listed in the student's known background knowledge.
 - Avoid sudden jumps in abstraction.
+- **First-use definition:** Before adapting, scan all slides to identify where each jargon term first appears. If the `speaker_notes` on that first-occurrence slide do not define the term, add a concise inline definition at the point of first use — even if a full explanation appears later. A later deep-dive does not excuse an unexplained first mention.
 
 ## Grade-Level Calibration
 
@@ -154,6 +155,43 @@ Avoid:
 - long prose
 - conversational narration
 - excessive detail
+
+## Spatial / Dimensional Explicitness Rule
+
+When slide content describes physical scenarios involving vectors, spatial relationships, or coordinate systems, the adapted `slide_content` MUST explicitly specify the dimensionality and orientation of the system:
+
+- The plane of motion (e.g., "motion confined to the xy-plane")
+- The direction/axis of each relevant vector quantity (e.g., "gravity $\vec{{g}} = (0, 0, -g)$ along -z", "electric field $\vec{{E}}$ along +x", "velocity $\vec{{v}}$ in the +y direction")
+- The axis of rotation when applicable (e.g., "rotation about the z-axis")
+- Whether the system is 2D planar or fully 3D spatial
+
+This applies to ALL vector quantities:
+force, field, velocity, acceleration, position, normal, tension, momentum, angular momentum, wave vector, current density, etc.
+
+Good examples:
+  "A marble slides in a hemispherical bowl; motion in the xy-plane, gravity $\vec{{g}}$ along -y"
+  "The electric field $\vec{{E}}$ points along +x, the magnetic field $\vec{{B}}$ along +y"
+  "A pendulum swings in the xz-plane; gravity points along -z"
+  "Active 90° rotation of the bowl+marble system about the z-axis; gravity $\vec{{g}}$ along -z held fixed"
+
+Insufficient (ambiguous — do NOT write like this):
+  "A marble in a circular bowl under gravity"
+  "The fields are perpendicular"
+  "A rotating object with fixed gravity"
+
+### Axis Assignment Protocol
+
+  When the scenario involves environmental forces (gravity, uniform fields, etc.):
+
+  1. Identify the primary plane of motion from context clues
+     ("horizontal," "tabletop," "floor," "slides on," "rolls across" → xy-plane).
+  2. Assign gravity/vertical forces to the axis perpendicular to that plane,
+     negative by default (−z if motion is in xy, −y if motion is in xz).
+  3. State the assignment explicitly on the first slide that uses it:
+     "Motion confined to the xy-plane; gravity $\vec{{g}} = (0, 0, -g)$ along −z."
+  4. All subsequent slides inherit this frame. Do not redefine axes mid-lecture.
+  5. If the scenario provides no context clues, default to:
+     motion in xy-plane, gravity along −z.
 
 ## `speakers_note` Rules
 
