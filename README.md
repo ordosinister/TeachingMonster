@@ -1,5 +1,7 @@
 ﻿# TeachingMonster
 
+![Cover](presentation/Cover.png)
+
 > An automated educational video generation pipeline that transforms a course requirement and student persona into a fully narrated video presentation — powered by multiple AI models.
 >
 > 一套全自動 AI 教學影片生成系統：接收課程需求與學生人物誌，無需任何人為介入，端到端產出附語音旁白的教學投影片影片。
@@ -83,7 +85,7 @@ The "instructional design brain" of the pipeline, using a **multi-agent collabor
 3. **Draft Generation / 初稿生成** — Produces a structured lesson blueprint (JSON) with per-slide titles, bullet content, speaker notes, slide types, and cross-slide context. / 生成結構化課程藍圖（JSON），包含每張投影片的標題、條列內容、講稿、類型與跨頁上下文。
 4. **Multi-Agent Reflection Loop / 多智能體反思迴圈**：
    - **SlideAudit** — Checks each slide for pedagogical completeness / 檢查每張投影片的教學完整性
-   - **FeedbackTool (Student Simulator) / 學生模擬器** — Reads the draft from the target student''s perspective, flagging comprehension gaps / 以目標學生視角閱讀草稿，標記理解障礙
+   - **FeedbackTool (Student Simulator) / 學生模擬器** — Reads the draft from the target student's perspective, flagging comprehension gaps / 以目標學生視角閱讀草稿，標記理解障礙
    - **FineTuningTool** — Revises slides based on feedback / 根據回饋修正投影片內容
 5. **Final Script Generation / 最終稿生成** — After multiple refinement iterations, produces the final structured blueprint. / 經多輪迭代後產出最終結構化藍圖。
 6. **Math Validation / 數學驗證** — For math/physics subjects, the LLM generates executable Python verification code that is actually run to confirm formula and calculation correctness. / 對數學/物理科目，LLM 生成可執行的 Python 驗證程式碼並實際執行，確認公式與計算的正確性。
@@ -93,7 +95,7 @@ The "instructional design brain" of the pipeline, using a **multi-agent collabor
 
 ### Stage 2: Adaptation Layer / 適應層改寫
 
-The core of the system''s **Adaptive Teaching** capability. Rewrites both `slide_content` (on-screen text) and `speakers_note` (narration) to match the target student''s grade level, background knowledge, and cognitive profile.
+The core of the system's **Adaptive Teaching** capability. Rewrites both `slide_content` (on-screen text) and `speakers_note` (narration) to match the target student's grade level, background knowledge, and cognitive profile.
 
 系統實現 **「適應性教學」** 的核心。根據學生人物誌的年級水準、先備知識與認知特徵，改寫每張投影片的螢幕文字與講稿。
 
@@ -128,7 +130,7 @@ Renders each adapted slide as a high-quality PNG image using a template-based ap
 
 ### Stage 4: TTS Audio Generation / 語音合成
 
-Converts each slide''s `speakers_note` into spoken audio using OpenAI `gpt-4o-mini-tts`.
+Converts each slide's `speakers_note` into spoken audio using OpenAI `gpt-4o-mini-tts`.
 
 使用 OpenAI `gpt-4o-mini-tts` 模型將每張投影片的講稿轉換為語音。
 
@@ -162,7 +164,7 @@ TeachingMonster 為 **第一屆 AI 教學挑戰賽** 設計，對應三大核心
 | Competition Dimension / 競賽維度 | TeachingMonster Approach / 對應設計 |
 |---|---|
 | **Knowledge Scaffolding / 知識鷹架** | Background analysis infers prior knowledge & gaps; adaptation layer builds conceptual bridges by grade level; multi-agent reflection loop ensures complete logical deconstruction / 背景分析推斷先備知識與缺口；適應層根據年級水準搭建概念橋樑；多智能體反思迴圈確保邏輯解構完整 |
-| **Adaptive Teaching / 適應性教學** | Student-persona-driven adaptation (vocabulary, sentence complexity, pacing, scaffolding depth); grade-level calibration from elementary through undergraduate; student simulator detects comprehension gaps from the learner''s perspective / 學生人物誌驅動的適應層改寫（詞彙、句式、節奏、鷹架深度）；年級校準規則涵蓋小學至大學；學生模擬器從學習者視角檢測理解障礙 |
+| **Adaptive Teaching / 適應性教學** | Student-persona-driven adaptation (vocabulary, sentence complexity, pacing, scaffolding depth); grade-level calibration from elementary through undergraduate; student simulator detects comprehension gaps from the learner's perspective / 學生人物誌驅動的適應層改寫（詞彙、句式、節奏、鷹架深度）；年級校準規則涵蓋小學至大學；學生模擬器從學習者視角檢測理解障礙 |
 | **Cognitive Engagement / 認知參與維持** | Diverse slide types (base, concept_check, puzzle, algorithm walkthrough); voice-profile-driven emotional calibration; unified visual style to reduce cognitive load / 多樣化投影片類型（基礎、概念檢查、謎題、演算法逐步解說）；聲音人物誌驅動的語音情感校準；視覺風格統一以降低認知負荷 |
 
 ### Slide Types / 投影片類型
@@ -238,7 +240,7 @@ Generate a new educational video. `{env}` is either `dev` (Ollama-hosted models)
 {
   "request_id": "unique-request-identifier",
   "course_requirement": "Description of the course topic and learning goals",
-  "student_persona": "Description of the target student''s grade level and background"
+  "student_persona": "Description of the target student's grade level and background"
 }
 ```
 
@@ -267,7 +269,7 @@ Pass the `X-Dry-Run: true` header to receive a dummy response without executing 
 curl -X POST "http://localhost:8000/v1/dev/video/generate" \
      -H "Content-Type: application/json" \
      -H "X-Dry-Run: true" \
-     -d ''{"request_id":"test","course_requirement":"...","student_persona":"..."}''
+     -d '{"request_id":"test","course_requirement":"...","student_persona":"..."}'
 ```
 
 ---
@@ -361,7 +363,7 @@ Use this `https` URL as the base for all API requests:
 ```bash
 curl -X POST "https://your-random-id.trycloudflare.com/v1/prod/video/generate" \
      -H "Content-Type: application/json" \
-     -d ''{"request_id":"req_001","course_requirement":"...","student_persona":"..."}''
+     -d '{"request_id":"req_001","course_requirement":"...","student_persona":"..."}'
 ```
 
 ---

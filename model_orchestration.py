@@ -80,7 +80,7 @@ def _build_config(env: str) -> dict:
                            name='master', temperature=0, reasoning=True),
          'image_caption': ChatOllama(model='qwen3.5:397b-cloud',
                            base_url='https://ollama.com',
-                           name='image_caption', temperature=0, reasoning=True),
+                           name='image_caption', temperature=0),
          'image_quality': 'medium'
          },
     "PROD":

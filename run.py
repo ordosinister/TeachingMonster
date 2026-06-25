@@ -112,7 +112,7 @@ if __name__ == "__main__":
 
         os.environ['env'] = "PROD"
 
-        req_id = "celery_4942_1781282041"
+        req_id = "celery_0000_0000000010"
         # req_id = "celery_3499_1778645677"
 
         logger.info("Running in test mode with default values...")
