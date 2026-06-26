@@ -33,7 +33,6 @@ from initialization import credential_init
 from src.logic.writers.slide.image_logic.prompt_generation_pipeline import create_image_prompt_pipeline
 from src.logic.writers.slide.visual_style.style_generation_pipeline import create_visual_style_pipeline
 from src.logic.writers.slide.image_matplotlib.code_generation_pipeline import create_matplotlib_code_pipeline
-
 from src.logic.writers.slide.render_prompt import build_render_prompt
 # from src.logic.writers.slide.load_agent import create_plot_agent
 from model_orchestration import get_model_config

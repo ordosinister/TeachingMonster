@@ -1,7 +1,8 @@
 """Math verification and correction merge for blueprint slides."""
-
+import io
 import logging
 import os
+from contextlib import redirect_stdout
 from textwrap import dedent
 
 logging.basicConfig(level=logging.INFO)
@@ -55,9 +56,6 @@ def run_math_validation(slide_output, target_dir, env: str):
 
     math_pipeline = build_standard_chat_prompt_template(math_input) | model_main | StrOutputParser()
     math_llm_output = math_pipeline.invoke({"user_query": math_query})
-
-    import io
-    from contextlib import redirect_stdout
 
     stdout_capture = io.StringIO()
     try:
