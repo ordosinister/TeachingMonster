@@ -26,9 +26,9 @@ from model_orchestration import get_model_config
 from src.path.path_definition import get_project_dir
 from src.logic.writers.blueprint.generation_pipeline import (create_presentation_pipeline, create_slide_pipeline,
                                                              create_background_pipeline)
-from src.logic.writers.blueprint.agent.finetuning_v2.agent_tool import FineTuningTool
+from src.logic.writers.blueprint.agent.finetuning.agent_tool import FineTuningTool
 from src.logic.writers.blueprint.agent.slide_audit.agent_tool import SlideAuditTool
-from src.logic.writers.blueprint.agent.feedback_v2.agent_tool import FeedbackTool
+from src.logic.writers.blueprint.agent.feedback.agent_tool import FeedbackTool
 from src.logic.writers.blueprint.structured_output import LessonBlueprint
 from src.logic.writers.blueprint.agent import AGENT_INSTRUCTION
 from src.logic.writers.blueprint.post_processing.math_validation import run_math_validation

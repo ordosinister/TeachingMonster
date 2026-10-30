@@ -8,7 +8,7 @@ from langchain_core.runnables import Runnable, RunnablePassthrough
 from langchain_core.output_parsers import PydanticOutputParser, StrOutputParser
 from pydantic import BaseModel, Field
 
-from src.logic.writers.blueprint.agent.finetuning_v2 import MERGE_SYSTEM_PROMPT
+from src.logic.writers.blueprint.agent.finetuning import SYSTEM_PROMPT, MERGE_SYSTEM_PROMPT
 from src.logic import build_standard_chat_prompt_template
 from src.path.path_definition import get_project_dir
 from src.logic.writers.blueprint.structured_output import StudentProfileInterpretation, LessonBlueprint
@@ -36,7 +36,6 @@ class FineTuningTool(BaseTool):
 
     @classmethod
     def create(cls, llm: Runnable):
-        import importlib
         system_prompt = SYSTEM_PROMPT
         improve_input = {
             "system": {"template": system_prompt},
@@ -85,7 +84,7 @@ class FineTuningTool(BaseTool):
         """Detect tool source from feedback tag and load the latest full result."""
         tool_folders = {
             "# SlideAuditTool": "slide_audit",
-            "# FeedbackTool": "feedback_v2",
+            "# FeedbackTool": "feedback",
             # "# MathTool": "mathematic_coder_v2",
         }
         for tag, folder in tool_folders.items():

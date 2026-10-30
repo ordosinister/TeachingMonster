@@ -20,43 +20,26 @@ class Inputs(BaseModel):
 
 
 SLIDE_AUDIT_MERGE_PROMPT = dedent("""\
-# ROLE
-AP Lecturer with extensive slide-based presentation design experience spanning 5th grade through second-year undergraduate. Knows the pain points at every level and holds the highest standard for lecture material. Merge prerequisite gap and jargon overload findings into a single report: de-duplicate, score, and issue a verdict.
+# Goal
+Merge prerequisite gap and jargon overload findings into a single unified report with de-duplication, scoring, and an overall verdict.
 
-# INPUTS
+# Role
+You are an enterprise training material audit integrator. You combine parallel diagnostic results into a coherent assessment.
+
+# Inputs
 - PREREQUISITE GAP: per-slide gap descriptions with reasons
-- JARGON OVERLOAD: per-slide list of undefined terms
+- JARGON OVERLOAD: per-slide list of undefined or regionally ambiguous terms
 
-# TASK
-Merge both analyses slide by slide. De-duplicate overlapping entries. Assign scores. Output the final report.
-
-# RULES
-- Preserve each gap description and term exactly as received. Never annotate with extra values, formulas, or physical interpretations.
+# Rules
+- Preserve each gap description and term exactly as received. Never annotate with extra values or interpretations.
 - De-duplicate: if the same gap appears in both analyses, list it once under the more detailed description.
 - Missing knowledge_gap coverage = blocking issue -> Needs Major Rework.
 - Scores must cite the rubric tier. Never combine or sum scores.
 
-# CHAIN OF THOUGHT
-1. Walk through slides 1..N.
-2. For each slide: collect gap descriptions and jargon terms.
-3. Merge and de-duplicate. Label each entry Gap or Jargon by its source.
-4. Count slides with gaps for Prerequisite Gap Score; slides with jargon for Jargon Overload Score.
-5. Assign Overall Verdict.
+# Constraints
+- Score assignments must follow the rubric exactly. No interpolation between tiers.
 
-# PREREQUISITE GAP SCORING
-+1: Proactively bridges beyond what Background Knowledge indicates.
-0: All prerequisites adequately covered.
--0.3: Speed bump -- a few gaps, patchable while watching.
--0.6: Stop and fix -- must pause or rewind repeatedly.
--1.0: Roadblock -- core content incomprehensible.
-
-# JARGON OVERLOAD SCORING
-0: Zero slides with undefined terms.
--0.3: 1 slide with undefined terms.
--0.6: 2 slides with undefined terms.
--1.0: 3+ slides with undefined terms.
-
-# OUTPUT FORMAT
+# Output
 # SlideAuditTool
 
 Slide <N>: Gap -- <description>
@@ -69,7 +52,26 @@ Overall Verdict: <Pass / Needs Minor Fixes / Needs Major Rework>
 """)
 
 
-SUMMARIZE_AUDIT_PROMPT = dedent("""Summarize the following audit report in 2-3 sentences. Include the key scores and the most critical issues found. Be concise.
+SUMMARIZE_AUDIT_PROMPT = dedent("""\
+# Goal
+Summarize the audit report in 2-3 sentences, including key scores and the most critical issues.
+
+# Role
+You are a concise report summarizer.
+
+# Inputs
+- AUDIT REPORT: the full slide audit text
+
+# Rules
+- Include key scores.
+- Highlight the most critical issues.
+- Be concise.
+
+# Constraints
+- Maximum 3 sentences.
+
+# Output
+A 2-3 sentence summary of the audit.
 """)
 
 class SlideAuditTool(BaseTool):

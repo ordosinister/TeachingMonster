@@ -13,7 +13,28 @@ from src.path.path_definition import get_project_dir
 from src.logic import build_standard_chat_prompt_template
 from src.logic.writers.blueprint.structured_output import StudentProfileInterpretation, LessonBlueprint
 
-SUMMARIZE_AUDIT_PROMPT = dedent("""\nSummarize the following audit report. State the four dimension scores and the total. If total < +4, output "NOT DONE". If total = +4, output "DONE". Be concise.\n""")
+SUMMARIZE_AUDIT_PROMPT = dedent("""\
+# Goal
+Summarize the audit report concisely, stating the four dimension scores and total.
+
+# Role
+You are a concise report summarizer.
+
+# Inputs
+- AUDIT REPORT: the full feedback audit text
+
+# Rules
+- State each dimension score.
+- State the total.
+- If total < +4, output "NOT DONE".
+- If total = +4, output "DONE".
+
+# Constraints
+- Output must be 2-3 sentences maximum.
+
+# Output
+A 2-3 sentence summary with scores and DONE/NOT DONE status.
+""")
 
 
 class Inputs(BaseModel):
@@ -87,7 +108,7 @@ class FeedbackTool(BaseTool):
             "teaching_adjustments": teaching_adjustments,
         })
 
-        feedback_dir = os.path.join(target_dir, "feedback_v2")
+        feedback_dir = os.path.join(target_dir, "feedback")
         if not os.path.isdir(feedback_dir):
             os.makedirs(feedback_dir)
 
@@ -120,7 +141,7 @@ class FeedbackTool(BaseTool):
             "knowledge_gaps": knowledge_gaps,
             "teaching_adjustments": teaching_adjustments,
         })
-        feedback_dir = os.path.join(target_dir, "feedback_v2")
+        feedback_dir = os.path.join(target_dir, "feedback")
         if not os.path.isdir(feedback_dir):
             os.makedirs(feedback_dir)
 
