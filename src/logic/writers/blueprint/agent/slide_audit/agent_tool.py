@@ -90,15 +90,10 @@ class SlideAuditTool(BaseTool):
     summarize_pipeline: Runnable
 
     @classmethod
-    def create(cls, llm: Runnable, subject: str):
-        prereq_module_path = f"src.logic.writers.blueprint.agent.prerequisite_gap.{subject}"
-        prereq_module = importlib.import_module(prereq_module_path)
-
-        jargon_module_path = f"src.logic.writers.blueprint.agent.jargon_overload.{subject}"
-        jargon_module = importlib.import_module(jargon_module_path)
+    def create(cls, llm: Runnable):
 
         prereq_input = {
-            "system": {"template": prereq_module.SYSTEM_PROMPT},
+            "system": {"template": prereq_SYSTEM_PROMPT},
             "human": {
                 "template": dedent("""
                     TARGET CONTENT: {user_query}
@@ -113,7 +108,7 @@ class SlideAuditTool(BaseTool):
         prereq_pipeline = build_standard_chat_prompt_template(prereq_input) | llm | StrOutputParser()
 
         jargon_input = {
-            "system": {"template": jargon_module.SYSTEM_PROMPT},
+            "system": {"template": jargon_SYSTEM_PROMPT},
             "human": {
                 "template": dedent("""
                     TARGET CONTENT: {user_query}

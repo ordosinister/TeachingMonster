@@ -26,7 +26,6 @@ from model_orchestration import get_model_config
 from src.path.path_definition import get_project_dir
 from src.logic.writers.blueprint.generation_pipeline import (create_presentation_pipeline, create_slide_pipeline,
                                                              create_background_pipeline)
-from src.logic.writers.blueprint.subject_classifier import classification
 from src.logic.writers.blueprint.agent.finetuning_v2.agent_tool import FineTuningTool
 from src.logic.writers.blueprint.agent.slide_audit.agent_tool import SlideAuditTool
 from src.logic.writers.blueprint.agent.feedback_v2.agent_tool import FeedbackTool
@@ -69,9 +68,6 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
 
     env = os.environ['env']
 
-    # Compute subject classification early; needed for pipeline and return value.
-    subject = classification(course_requirement, env)
-
     logger.info(f"{request_id}")
 
     # Check (course_requirement, persona) cache before running pipeline.
@@ -101,7 +97,7 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
         except OutputParserException:
             logger.info(f"{request_id} Background Parsing Error")
 
-    logger.info(f"{request_id} pedagogical_state: {pedagogical_state}")
+    logger.info(f"{request_id} {cache_key} pedagogical_state: {pedagogical_state}")
 
     presentation_pipeline = create_presentation_pipeline(get_model_config(env)['master'])
 
@@ -125,9 +121,9 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
     with open(os.path.join(draft_dir, "version_0.json"), "w", encoding="utf-8") as f:
         f.write(output.model_dump_json(indent=2))
 
-    tools = [SlideAuditTool.create(llm=model_main, subject=subject),
-             FeedbackTool.create(llm=model_main, subject=subject),
-             FineTuningTool.create(llm=model_sub, subject=subject)]
+    tools = [SlideAuditTool.create(llm=model_main),
+             FeedbackTool.create(llm=model_main),
+             FineTuningTool.create(llm=model_sub)]
 
     agent = create_agent(
         model=model_main,
@@ -152,7 +148,7 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
         draft = LessonBlueprint.model_validate_json(f.read())
 
     slide_pipeline = create_slide_pipeline(model=get_model_config(env)['master'],
-                                           subject=subject, pydantic_object=LessonBlueprint)
+                                           pydantic_object=LessonBlueprint)
 
     while True:
         try:
@@ -175,7 +171,7 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
     # Cache the completed blueprint for future (course_requirement, persona) reuse.
     _save_to_cache(cache_key, target_dir)
 
-    return subject
+    return course_requirement, persona
 
 
 if __name__ == "__main__":

@@ -39,12 +39,10 @@ class FeedbackTool(BaseTool):
     summarize_pipeline: Runnable
 
     @classmethod
-    def create(cls, llm: Runnable, subject: str):
-        module_path = f"src.logic.writers.blueprint.agent.feedback_v2.{subject}"
-        module = importlib.import_module(module_path)
+    def create(cls, llm: Runnable):
 
         input_ = {
-            "system": {"template": module.SYSTEM_PROMPT},
+            "system": {"template": SYSTEM_PROMPT},
             "human": {
                 "template": dedent("""
                     SLIDE: {user_query}

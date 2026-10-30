@@ -1,4 +1,4 @@
-﻿from textwrap import dedent
+from textwrap import dedent
 from typing import Literal, Union
 
 from langchain_core.output_parsers import PydanticOutputParser
@@ -36,7 +36,6 @@ For each slide, decide whether it needs no image (None), a conceptual illustrati
 - <Slide Content>: the slide's bullet points and text
 - <Speaker Note>: teacher's spoken narration — primary signal for whether a visual is promised to students
 - <Context>: all slides in the deck — use to avoid redundant visuals, but the same function may need plotting on multiple slides for different pedagogical angles
-- <Slide Type>: base | puzzle | concept_check | algorithm
 - <Student Persona>: grade, focus time, background knowledge
 
 # Rules
@@ -185,7 +184,6 @@ def create_image_prompt_pipeline(model):
                   "template": dedent("""
                   <Context>: {context}
                   
-                  <Slide Type>: {slide_type}
                   
                   <Slide Content>: {slide_content}
                   
@@ -195,7 +193,7 @@ def create_image_prompt_pipeline(model):
                 
                   Structured Output Instruction: {format_instructions}
                   """),
-                  "input_variable": ["slide_content", "speaker_notes", "context", "slide_type", "student_persona"],
+                  "input_variable": ["slide_content", "speaker_notes", "context", "student_persona"],
                   "partial_variables": {"format_instructions": format_instructions}}}
 
     chat_prompt_template = build_standard_chat_prompt_template(input_)

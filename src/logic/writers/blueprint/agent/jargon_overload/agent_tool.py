@@ -40,12 +40,9 @@ class JargonOverloadTool(BaseTool):
     pipeline: Runnable
 
     @classmethod
-    def create(cls, llm: Runnable, subject: str):
+    def create(cls, llm: Runnable):
 
-        module_path = f"src.logic.writers.blueprint.jargon_overload.{subject}"
-        module = importlib.import_module(module_path)
-
-        input_ = {"system": {"template": module.SYSTEM_PROMPT},
+        input_ = {"system": {"template": SYSTEM_PROMPT},
                   "human": {"template": dedent("""
                                             TARGET CONTENT: {user_query}
 

@@ -111,7 +111,6 @@ async def process_slide_async(client, slide, image_template_rb, semaphore, env: 
         slide_title = slide['slide_title']
         speaker_notes = slide['speaker_notes']
         context = slide['context']
-        slide_type = slide['slide_type']
         image_temp = f"output{slide['slide_number']}.png"
 
         logger.info(f"Starting slide {slide['slide_number']} image")
@@ -124,7 +123,7 @@ async def process_slide_async(client, slide, image_template_rb, semaphore, env: 
 
                 output = await image_prompt_pipeline.ainvoke({"slide_content": ",\n".join(slide_content),
                                                               "speaker_notes": speaker_notes,
-                                                              "context": context, "slide_type": slide_type,
+                                                              "context": context,
                                                               "student_persona": slide['student_persona']})
 
                 logger.info(f"Slide {slide['slide_number']} image classification: {output.image_selection}")

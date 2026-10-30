@@ -35,10 +35,9 @@ class FineTuningTool(BaseTool):
     pipeline: Runnable
 
     @classmethod
-    def create(cls, llm: Runnable, subject: str):
+    def create(cls, llm: Runnable):
         import importlib
-        mod = importlib.import_module(f"src.logic.writers.blueprint.agent.finetuning_v2.{subject}")
-        system_prompt = mod.SYSTEM_PROMPT
+        system_prompt = SYSTEM_PROMPT
         improve_input = {
             "system": {"template": system_prompt},
             "human": {
