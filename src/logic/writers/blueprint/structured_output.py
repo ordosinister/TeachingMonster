@@ -51,7 +51,6 @@ class AlgorithmWalkthroughSlide(SlideBase):
  key_insight: str = Field(..., description="The critical '\''aha!\'' moment of the algorithm")
 
 class StudentProfileInterpretation(BaseModel):
- inferred_level: str = Field(..., description="Estimated academic level")
  knowledge_gaps: List[str] = Field(..., description="Potential gaps to scaffold around")
  teaching_adjustments: List[str] = Field(..., description="How explanations will be adapted")
 

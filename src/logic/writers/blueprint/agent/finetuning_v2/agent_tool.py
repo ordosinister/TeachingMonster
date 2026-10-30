@@ -47,11 +47,9 @@ class FineTuningTool(BaseTool):
 
                     COURSE_REQUIREMENT: {course_requirement}
 
-                    INFERRED_LEVEL: {inferred_level}
-
                     FEEDBACK: {feedback}
                 """),
-                "input_variable": ["user_query", "course_requirement", "inferred_level", "feedback"]
+                "input_variable": ["user_query", "course_requirement", "feedback"]
             }
         }
         improve_pipeline = build_standard_chat_prompt_template(improve_input) | llm | StrOutputParser()
@@ -68,12 +66,10 @@ class FineTuningTool(BaseTool):
                     IMPROVEMENTS: {improvements}
 
                     COURSE_REQUIREMENT: {course_requirement}
-
-                    INFERRED_LEVEL: {inferred_level}
                     
                     Output format instructions: {format_instructions}
                 """),
-                "input_variable": ["user_query", "improvements", "course_requirement", "inferred_level"],
+                "input_variable": ["user_query", "improvements", "course_requirement"],
                 "partial_variables": {'format_instructions': format_instructions}
             }
         }
@@ -110,7 +106,6 @@ class FineTuningTool(BaseTool):
 
         request_id = args['request_id']
         feedback = args.get('feedback', "")
-        inferred_level = runtime.context.inferred_level
 
         target_dir = os.path.join(get_project_dir(), "data", request_id)
         full_feedback = self._resolve_feedback(target_dir, feedback)
@@ -128,7 +123,6 @@ class FineTuningTool(BaseTool):
         result = self.pipeline.invoke({
             "user_query": query,
             "course_requirement": course_requirement,
-            "inferred_level": inferred_level,
             "feedback": full_feedback
         })
 
@@ -143,7 +137,6 @@ class FineTuningTool(BaseTool):
 
         request_id = args['request_id']
         feedback = args.get('feedback', "")
-        inferred_level = runtime.context.inferred_level
 
         target_dir = os.path.join(get_project_dir(), "data", request_id)
         drafts = sorted(glob(f"{os.path.join(target_dir, 'draft')}/*.json"), key=os.path.getmtime)
@@ -162,7 +155,6 @@ class FineTuningTool(BaseTool):
         result = await self.pipeline.ainvoke({
             "user_query": query,
             "course_requirement": course_requirement,
-            "inferred_level": inferred_level,
             "feedback": full_feedback
         })
 

@@ -52,10 +52,8 @@ class FeedbackTool(BaseTool):
                     KNOWLEDGE_GAP: {knowledge_gaps}
 
                     TEACHING_ADJUSTMENTS: {teaching_adjustments}
-
-                    INFERRED_LEVEL: {inferred_level}
                 """),
-                "input_variable": ["user_query", "knowledge_gaps", "teaching_adjustments", "inferred_level"]
+                "input_variable": ["user_query", "knowledge_gaps", "teaching_adjustments"]
             }
         }
         pipeline = build_standard_chat_prompt_template(input_) | llm | StrOutputParser()
@@ -72,7 +70,6 @@ class FeedbackTool(BaseTool):
         print(f"Running {self.name}...")
         knowledge_gaps = "\n".join(runtime.context.knowledge_gaps)
         teaching_adjustments = "\n".join(runtime.context.teaching_adjustments)
-        inferred_level = runtime.context.inferred_level
 
         args = input.get("input", input)
 
@@ -90,7 +87,6 @@ class FeedbackTool(BaseTool):
             "user_query": query,
             "knowledge_gaps": knowledge_gaps,
             "teaching_adjustments": teaching_adjustments,
-            "inferred_level": inferred_level
         })
 
         feedback_dir = os.path.join(target_dir, "feedback_v2")
@@ -108,7 +104,6 @@ class FeedbackTool(BaseTool):
         print(f"Running {self.name}...")
         knowledge_gaps = "\n".join(runtime.context.knowledge_gaps)
         teaching_adjustments = "\n".join(runtime.context.teaching_adjustments)
-        inferred_level = runtime.context.inferred_level
 
         args = input.get("input", input)
 
@@ -126,7 +121,6 @@ class FeedbackTool(BaseTool):
             "user_query": query,
             "knowledge_gaps": knowledge_gaps,
             "teaching_adjustments": teaching_adjustments,
-            "inferred_level": inferred_level
         })
         feedback_dir = os.path.join(target_dir, "feedback_v2")
         if not os.path.isdir(feedback_dir):
