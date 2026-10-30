@@ -69,7 +69,7 @@ def main(request_id, course_requirement, student_persona):
 
         logger.info("Step 1: Generating Blueprint...")
         subject = run_blueprint.main(request_id=request_id, course_requirement=course_requirement,
-                                     student_persona=student_persona)
+                                     persona=student_persona)
         blueprint_elapsed = time.perf_counter() - blueprint_start_time
         logger.info(f"Blueprint generation time: {blueprint_elapsed:.2f} seconds")
 
