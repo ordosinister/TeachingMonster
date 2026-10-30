@@ -22,16 +22,15 @@ from langchain_core.exceptions import OutputParserException
 from langchain_core.messages import HumanMessage
 from glob import glob
 from model_orchestration import get_model_config
+
 from src.path.path_definition import get_project_dir
-from src.logic import build_standard_chat_prompt_template
 from src.logic.writers.blueprint.generation_pipeline import (create_presentation_pipeline, create_slide_pipeline,
-                                                             create_background_pipeline, create_adaptability_pipeline,
-                                                             create_student_pipeline)
+                                                             create_background_pipeline)
 from src.logic.writers.blueprint.subject_classifier import classification
 from src.logic.writers.blueprint.agent.finetuning_v2.agent_tool import FineTuningTool
 from src.logic.writers.blueprint.agent.slide_audit.agent_tool import SlideAuditTool
 from src.logic.writers.blueprint.agent.feedback_v2.agent_tool import FeedbackTool
-from src.logic.writers.blueprint.structured_output import LessonBlueprint, AdaptabilityOutput, StudentProfileInterpretation
+from src.logic.writers.blueprint.structured_output import LessonBlueprint
 from src.logic.writers.blueprint.agent import AGENT_INSTRUCTION
 from src.logic.writers.blueprint.post_processing.math_validation import run_math_validation
 
@@ -104,7 +103,7 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
 
     logger.info(f"{request_id} pedagogical_state: {pedagogical_state}")
 
-    presentation_pipeline = create_presentation_pipeline(get_model_config(env)['master'], subject=subject)
+    presentation_pipeline = create_presentation_pipeline(get_model_config(env)['master'])
 
     logger.info(f"Start drafting {request_id}")
 

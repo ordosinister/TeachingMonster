@@ -9,11 +9,12 @@ from textwrap import dedent
 from typing import Literal
 
 from langchain_core.messages import SystemMessage
-from langchain_core.prompts import PromptTemplate, HumanMessagePromptTemplate, ChatPromptTemplate
+from langchain_core.prompts import PromptTemplate, HumanMessagePromptTemplate, ChatPromptTemplate, \
+    SystemMessagePromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser, StrOutputParser
 from langchain_core.runnables import Runnable, RunnablePassthrough
 
-from src.logic.writers.blueprint.structured_output import LessonBlueprint, StudentProfileInterpretation, AdaptabilityOutput
+from src.logic.writers.blueprint.structured_output import LessonBlueprint, StudentProfileInterpretation
 from src.logic.writers.blueprint.system_prompt_warehouse.background import SYSTEM_PROMPT as BACKGROUND_SYSTEM_PROMPT
 
 """Pipeline builders for lesson blueprint generation.
@@ -99,30 +100,33 @@ def create_background_pipeline(model) -> Runnable:
     <COURSE_REQUIREMENT> across publishers / regions, without assuming a
     specific STEM discipline.
     """
-    system_prompt = BACKGROUND_SYSTEM_PROMPT
 
     output_parser = PydanticOutputParser(pydantic_object=StudentProfileInterpretation)
     format_instructions = output_parser.get_format_instructions()
 
-    system_message = SystemMessage(content=system_prompt)
+    system_prompt = PromptTemplate(template=BACKGROUND_SYSTEM_PROMPT,
+                                   partial_variables={'format_instructions': format_instructions})
+
+    system_message = SystemMessagePromptTemplate(prompt=system_prompt)
+
     human_prompt = PromptTemplate(template=dedent("""
     <COURSE_REQUIREMENT>: {course_requirement}
     <STUDENT_PERSONA>: {student_persona}
-
-    Output format instructions: {format_instructions}
     """),
     input_variables=["course_requirement", "student_persona"],
-    partial_variables={'format_instructions': format_instructions}
+
     )
     human_message = HumanMessagePromptTemplate(prompt=human_prompt)
 
-    chat_prompt = ChatPromptTemplate.from_messages([system_message,
-    human_message
+    chat_prompt = ChatPromptTemplate.from_messages([
+        system_message,
+        human_message
     ])
 
     pipeline = chat_prompt | model | output_parser
 
     return pipeline
+
 
 def create_adaptability_pipeline(model, pydantic_object) -> Runnable:
     ADAPTABILITY_SYSTEM_PROMPT = dedent("""

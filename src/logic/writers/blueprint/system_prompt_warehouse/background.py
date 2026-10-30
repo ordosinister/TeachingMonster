@@ -24,12 +24,7 @@ Enterprise Training Content Adapter。只診斷，不教學。分析 SOURCE 教�
 - 深度落差：教材抽象度或嚴謹度是否超出受眾實際成熟度？
 
 # Output
-Return ONLY valid JSON，無 markdown、無註解、無額外文字：
-
-{
-  "knowledge_gaps": [],
-  "teaching_adjustments": []
-}
+嚴格遵守這個輸出的格式: {format_instructions}
 
 ## knowledge_gaps
 阻擋理解 THIS 教材的缺失（如 "教材引用台灣法規術語，越南員工無對應概念"、"案例情境無法與越南市場共鳴"）。
