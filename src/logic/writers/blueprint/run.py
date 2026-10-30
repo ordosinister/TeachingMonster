@@ -6,11 +6,10 @@ multi-agent feedback loops, and mathematical validation.
 """
 
 import hashlib
-import json
 import logging
 import os
 import shutil
-from typing import Literal
+from typing import Literal, Tuple
 from textwrap import dedent
 
 logging.basicConfig(level=logging.INFO)
@@ -67,7 +66,7 @@ def _save_to_cache(cache_key: str, source_dir: str) -> None:
     shutil.copytree(source_dir, cache_dir)
 
 
-def main(request_id: str, course_requirement: str, persona: str) -> str:
+def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, str]:
 
     env = os.environ['env']
 
@@ -76,28 +75,22 @@ def main(request_id: str, course_requirement: str, persona: str) -> str:
 
     logger.info(f"{request_id}")
 
-    target_dir = os.path.join(get_project_dir(), "data", request_id)
+    # Check (course_requirement, persona) cache before running pipeline.
+    cache_key = _get_cache_key(course_requirement, persona)
+    logger.info(f"cache_key: {cache_key}")
+
+    target_dir = os.path.join(get_project_dir(), "data", request_id, cache_key)
     if not os.path.isdir(target_dir):
         os.makedirs(target_dir)
 
     output_filename = os.path.join(target_dir, "blueprint.json")
     if os.path.isfile(output_filename):
-        return subject
-
-    # Check (course_requirement, persona) cache before running pipeline.
-    cache_key = _get_cache_key(course_requirement, persona)
-    if _copy_from_cache(cache_key, target_dir):
-        logger.info(f"{request_id} Cache hit for (course_requirement, persona)")
-        return subject
-
-    input_filename = os.path.join(target_dir, "input_v2.json")
-    with open(input_filename, "w", encoding="utf-8") as f:
-        json.dump({"course_requirement": course_requirement, "student_persona": persona}, f)
+        return course_requirement, persona
 
     model_main = get_model_config(env)['main']
     model_sub = get_model_config(env)['sub']
 
-    background_pipeline = create_background_pipeline(model_main, subject=subject)
+    background_pipeline = create_background_pipeline(model_main)
 
     while True:
         try:

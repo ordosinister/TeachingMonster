@@ -14,7 +14,7 @@ from langchain_core.output_parsers import PydanticOutputParser, StrOutputParser
 from langchain_core.runnables import Runnable, RunnablePassthrough
 
 from src.logic.writers.blueprint.structured_output import LessonBlueprint, StudentProfileInterpretation, AdaptabilityOutput
-from src.logic.writers.blueprint import background_system_prompt
+from src.logic.writers.blueprint.system_prompt_warehouse.background import SYSTEM_PROMPT as BACKGROUND_SYSTEM_PROMPT
 
 """Pipeline builders for lesson blueprint generation.
 
@@ -92,12 +92,14 @@ def create_slide_pipeline(model, subject, pydantic_object) -> Runnable:
 
     return pipeline
 
-def create_background_pipeline(model, subject: Literal["physics", "biology", "mathematics", "computer_science"]) -> Runnable:
+def create_background_pipeline(model) -> Runnable:
+    """Build the background pipeline with a fixed, subject-agnostic SYSTEM_PROMPT.
 
-    module_path = f"src.logic.writers.blueprint.background_system_prompt.{subject}"
-    module = importlib.import_module(module_path)
-
-    system_prompt = module.SYSTEM_PROMPT
+    The prompt is designed to diagnose gaps between <STUDENT_PERSONA> and
+    <COURSE_REQUIREMENT> across publishers / regions, without assuming a
+    specific STEM discipline.
+    """
+    system_prompt = BACKGROUND_SYSTEM_PROMPT
 
     output_parser = PydanticOutputParser(pydantic_object=StudentProfileInterpretation)
     format_instructions = output_parser.get_format_instructions()
