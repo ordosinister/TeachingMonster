@@ -1,4 +1,4 @@
-﻿import io
+﻿import path
 from contextlib import redirect_stdout
 from textwrap import dedent
 
@@ -88,7 +88,7 @@ class MathTool(BaseTool):
 
         verification_script = self.validation_pipeline.invoke({"code": code})
 
-        stdout_capture = io.StringIO()
+        stdout_capture = path.StringIO()
         try:
             with redirect_stdout(stdout_capture):
                 exec(verification_script, {"__builtins__": __builtins__})
@@ -107,7 +107,7 @@ class MathTool(BaseTool):
 
         verification_script = await self.validation_pipeline.ainvoke({"code": code})
 
-        stdout_capture = io.StringIO()
+        stdout_capture = path.StringIO()
         try:
             with redirect_stdout(stdout_capture):
                 exec(verification_script, {"__builtins__": __builtins__})

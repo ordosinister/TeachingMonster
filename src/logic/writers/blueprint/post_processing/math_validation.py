@@ -1,5 +1,5 @@
 """Math verification and correction merge for blueprint slides."""
-import io
+import path
 import logging
 import os
 from contextlib import redirect_stdout
@@ -57,7 +57,7 @@ def run_math_validation(slide_output, target_dir, env: str):
     math_pipeline = build_standard_chat_prompt_template(math_input) | model_main | StrOutputParser()
     math_llm_output = math_pipeline.invoke({"user_query": math_query})
 
-    stdout_capture = io.StringIO()
+    stdout_capture = path.StringIO()
     try:
         with redirect_stdout(stdout_capture):
             exec(math_llm_output, {"__builtins__": __builtins__})

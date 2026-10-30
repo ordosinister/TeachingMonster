@@ -26,3 +26,5 @@ python-dotenv
 python-pptx
 requests
 uvicorn
+win32com
+pymupdf

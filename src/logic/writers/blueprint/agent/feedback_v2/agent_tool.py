@@ -9,7 +9,7 @@ from langchain_core.runnables import Runnable
 from langchain_core.output_parsers import PydanticOutputParser, StrOutputParser
 from pydantic import BaseModel, Field
 
-from src.io.path_definition import get_project_dir
+from src.path.path_definition import get_project_dir
 from src.logic import build_standard_chat_prompt_template
 from src.logic.writers.blueprint.structured_output import StudentProfileInterpretation, LessonBlueprint
 

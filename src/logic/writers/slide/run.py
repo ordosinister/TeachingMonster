@@ -28,7 +28,7 @@ from openai import AsyncOpenAI, APIConnectionError
 from pydantic import BaseModel, Field
 from langchain_core.exceptions import OutputParserException
 
-from src.io.path_definition import get_project_dir
+from src.path.path_definition import get_project_dir
 from initialization import credential_init
 from src.logic.writers.slide.image_logic.prompt_generation_pipeline import create_image_prompt_pipeline
 from src.logic.writers.slide.visual_style.style_generation_pipeline import create_visual_style_pipeline

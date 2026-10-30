@@ -66,7 +66,7 @@ Client Request / 客戶端請求
 | `service/api.py` | FastAPI server with video generation and retrieval endpoints / FastAPI 伺服器，提供影片生成與取回端點 |
 | `service/worker.py` | Background pipeline executor wrapping `asyncio.to_thread()` / 背景管線執行器，封裝 `asyncio.to_thread()` |
 | `service/storage.py` | AWS S3 upload with SigV4 presigned URLs / AWS S3 上傳與 SigV4 預簽名 URL |
-| `run.py` | Master pipeline orchestrator (5 stages) / 主管線編排器（5 階段） |
+| `main.py` | Master pipeline orchestrator (5 stages) / 主管線編排器（5 階段） |
 | `model_orchestration.py` | DEV/PROD model configuration registry / DEV/PROD 雙環境模型配置註冊表 |
 | `initialization.py` | API key and credential loader from `config/credentials.ini` / 從設定檔載入 API 金鑰 |
 

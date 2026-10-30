@@ -69,17 +69,13 @@ def _build_config(env: str) -> dict:
     return {
     "DEV":
         {'main': ChatOllama(model='deepseek-v3.1:671b-cloud',
-                               base_url='https://ollama.com',
                                name='main', temperature=0),
          'context': llama_index_ollama(model='deepseek-v3.1:671b-cloud', temperature=0, request_timeout=240),
          'sub': ChatOllama(model='gpt-oss:120b-cloud',
-                           base_url='https://ollama.com',
                            name='sub', temperature=0),
          'master': ChatOllama(model='deepseek-v3.1:671b-cloud',
-                           base_url='https://ollama.com',
                            name='master', temperature=0, reasoning=True),
-         'image_caption': ChatOllama(model='qwen3.5:397b-cloud',
-                           base_url='https://ollama.com',
+         'image_caption': ChatOllama(model='kimi-k2.6:cloud',
                            name='image_caption', temperature=0),
          'image_quality': 'medium'
          },

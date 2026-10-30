@@ -17,7 +17,7 @@ from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.exceptions import OutputParserException
 
 from model_orchestration import get_model_config
-from src.io.path_definition import get_project_dir
+from src.path.path_definition import get_project_dir
 from src.logic import build_standard_chat_prompt_template
 from src.logic.writers.blueprint.structured_output import LessonBlueprint
 

@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 from src.logic import build_standard_chat_prompt_template
 from src.logic.writers.blueprint.structured_output import StudentProfileInterpretation, LessonBlueprint
-from src.io.path_definition import get_project_dir
+from src.path.path_definition import get_project_dir
 
 
 class Inputs(BaseModel):

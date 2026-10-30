@@ -2,7 +2,7 @@ import configparser
 import logging
 import os
 
-from src.io.path_definition import get_file
+from src.path.path_definition import get_file
 
 
 logger = logging.getLogger(__name__)
@@ -38,9 +38,10 @@ def credential_init():
 
     credentials = configparser.ConfigParser()
     credentials.read(credential_file)
-    os.environ['OPENAI_API_KEY'] = credentials['openai'].get('api_key')
-    os.environ['HuggingFace_API_KEY'] = credentials['HuggingFace_API_KEY'].get('api_key')
-    os.environ["OLLAMA_API_KEY"] = credentials['ollama'].get('api_key')
-    os.environ["COHERE_API_KEY"] = credentials['cohere'].get('api_key')
-    os.environ["AWS_ACCESS_KEY_ID"] = credentials['aws_access_key_id'].get('api_key')
-    os.environ["AWS_SECRET_ACCESS_KEY"] = credentials['aws_secret_access_key'].get('api_key')
+    # os.environ['OPENAI_API_KEY'] = credentials['openai'].get('api_key')
+    os.environ['OPENAI_API_KEY'] = "Hello"
+    # os.environ['HuggingFace_API_KEY'] = credentials['HuggingFace_API_KEY'].get('api_key')
+    # os.environ["OLLAMA_API_KEY"] = credentials['ollama'].get('api_key')。
+    # os.environ["COHERE_API_KEY"] = credentials['cohere'].get('api_key')
+    # os.environ["AWS_ACCESS_KEY_ID"] = credentials['aws_access_key_id'].get('api_key')
+    # os.environ["AWS_SECRET_ACCESS_KEY"] = credentials['aws_secret_access_key'].get('api_key')

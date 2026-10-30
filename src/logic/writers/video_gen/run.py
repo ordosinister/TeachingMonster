@@ -13,7 +13,7 @@ logger = logging.getLogger("Video Generation")
 import numpy as np
 from moviepy import ImageClip, AudioFileClip, concatenate_videoclips
 
-from src.io.path_definition import get_project_dir
+from src.path.path_definition import get_project_dir
 from initialization import credential_init
 
 

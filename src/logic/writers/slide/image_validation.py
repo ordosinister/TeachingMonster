@@ -6,7 +6,7 @@ mismatches, etc.) that would confuse students.
 """
 
 import asyncio
-import io
+import path
 import base64 as b64
 import logging
 import os
@@ -66,7 +66,7 @@ def validate_math_images(image_types: list, script: dict, output_dir: str, env: 
 
         # Encode image to base64
         with Image.open(image_path) as img:
-            buffered = io.BytesIO()
+            buffered = path.BytesIO()
             img.save(buffered, format="JPEG")
             image_str = b64.b64encode(buffered.getvalue()).decode("utf-8")
 

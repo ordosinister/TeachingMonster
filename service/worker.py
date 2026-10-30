@@ -10,7 +10,7 @@ import asyncio
 from service.storage import CloudStorage
 from run import main as run_pipeline
 
-from src.io.path_definition import get_project_dir
+from src.path.path_definition import get_project_dir
 
 
 
@@ -18,7 +18,7 @@ from src.io.path_definition import get_project_dir
 class VideoWorker:
     """Orchestrates video generation for a single request.
 
-    Runs the master pipeline (run.py) in a background thread and
+    Runs the master pipeline (main.py) in a background thread and
     uploads the resulting video to S3.
 
     Attributes:

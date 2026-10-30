@@ -23,7 +23,7 @@ logger = logging.getLogger("Text to Speech")
 from openai import AsyncOpenAI
 from mutagen.mp3 import MP3
 
-from src.io.path_definition import get_project_dir
+from src.path.path_definition import get_project_dir
 from initialization import credential_init
 from model_orchestration import get_model_config
 from src.logic.writers.tts.generation_pipeline import create_presentation_pipeline

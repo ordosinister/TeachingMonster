@@ -31,7 +31,7 @@ multi-agent feedback loops, and mathematical validation.
 """
 
 from model_orchestration import get_model_config
-from src.io.path_definition import get_project_dir
+from src.path.path_definition import get_project_dir
 from src.logic import build_standard_chat_prompt_template
 from src.logic.writers.blueprint.generation_pipeline import (create_presentation_pipeline, create_slide_pipeline,
                                                              create_background_pipeline, create_adaptability_pipeline,
