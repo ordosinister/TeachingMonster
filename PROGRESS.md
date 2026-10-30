@@ -8,10 +8,10 @@
 ## TODO
 - [ ] 完成 extraction 模組整合測試
 - [ ] 補充 .gitignore 涵蓋 credentials、data/、venv、__pycache__
-- [ ] 釐清 service/api.py 與 run.py 的入口職責分界
 - [ ] 補充單元測試與品質檢查工具（ruff / black）
 
 ## Done (recent)
+- [x] 釐清入口職責分界：service/api.py（FastAPI Web Service，對外 API）vs run.py（CLI 手動 Pipeline，本地調試/批次執行）
 - [x] 建立 extraction/ 與 extraction/powerpoint/、extraction/shared/、extraction/system_prompts/ 子模組
 - [x] 將 src/io/path_definition.py 搬遷至 src/path/path_definition.py
 - [x] 新增 .gitignore、AGENTS.md、PROGRESS.md
