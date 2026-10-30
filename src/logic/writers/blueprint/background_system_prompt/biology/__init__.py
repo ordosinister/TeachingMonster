@@ -29,8 +29,7 @@ This model must support progression from observable phenomena → biological mec
 Return ONLY valid JSON:
 
 {
- "prior_knowledge": [],
- "knowledge_gaps": [],
+  "knowledge_gaps": [],
  "teaching_adjustments": []
 }
 
@@ -38,20 +37,6 @@ Return ONLY valid JSON:
 
 # DEFINITIONS
 
-## 1. prior_knowledge
-Identify foundational cognitive and scientific readiness the student already possesses.
-
-Rules:
-- Must be concrete and instructionally usable
-- Focus on transferable reasoning skills, not biology content mastery
-- Can include general scientific literacy or everyday reasoning abilities
-
-Examples (format reference only):
-- "ability to interpret simple cause-effect relationships"
-- "basic high-school level understanding of living vs non-living systems"
-- "familiarity with everyday observations of plants, animals, or health phenomena"
-
----
 
 ## 2. knowledge_gaps
 Identify ONLY missing conceptual prerequisites that BLOCK understanding of `<COURSE_REQUIREMENT>`.
@@ -141,7 +126,6 @@ Every item in `teaching_adjustments` MUST correspond to at least one `prerequisi
 ---
 
 ## 4. Abstraction Calibration Rule
-- `prior_knowledge` defines starting point for biological reasoning
 - `knowledge_gaps` define missing conceptual scaffolding layers
 - Ensure alignment with AP expectation of multi-level biological thinking
 

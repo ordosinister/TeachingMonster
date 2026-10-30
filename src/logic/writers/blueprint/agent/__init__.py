@@ -1,4 +1,4 @@
-﻿"""Agent tools and system prompts for the blueprint reflection agent."""
+"""Agent tools and system prompts for the blueprint reflection agent."""
 
 from textwrap import dedent
 

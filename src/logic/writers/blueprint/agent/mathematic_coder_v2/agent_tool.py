@@ -1,4 +1,4 @@
-﻿import path
+import path
 from contextlib import redirect_stdout
 from textwrap import dedent
 

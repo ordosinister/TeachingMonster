@@ -1,4 +1,4 @@
-﻿import json
+import json
 import importlib
 from textwrap import dedent
 
@@ -27,7 +27,7 @@ class JargonOverloadTool(BaseTool):
     
     Scans the `user_query` to:
     - Extract all domain-specific jargon, notation, and technical terms
-    - Classify each term as Known, To-Be-Taught, or Orphan based on prior_knowledge and knowledge_gaps
+    - Classify each term as Known, To-Be-Taught, or Orphan based on knowledge_gaps
     - Prescribe a treatment for each Orphan: Pre-Explain, Substitute, Contextualize, or Accept
     - Flag sequencing violations where terms are used before they are explained
     - Produce a jargon load score and accessibility rating
@@ -50,12 +50,10 @@ class JargonOverloadTool(BaseTool):
                                             TARGET CONTENT: {user_query}
 
                                             COURSE_REQUIREMENT: {course_requirement}
-
-                                            PRIOR_KNOWLEDGE: {prior_knowledge}
                                             
                                             KNOWLEDGE_GAPS (learning objectives): {knowledge_gaps}
                                             """),
-                            "input_variable": ["user_query", "course_requirement", "prior_knowledge", "knowledge_gaps"]}}
+                            "input_variable": ["user_query", "course_requirement", "knowledge_gaps"]}}
 
         chat_prompt_template = build_standard_chat_prompt_template(input_)
 
@@ -65,7 +63,6 @@ class JargonOverloadTool(BaseTool):
 
     def _run(self, runtime: ToolRuntime[StudentProfileInterpretation], **input):
         print(f"Running {self.name}...")
-        prior_knowledge = "\n".join(runtime.context.prior_knowledge)
         knowledge_gaps = "\n".join(runtime.context.knowledge_gaps)
 
         args = input.get("input", input)
@@ -75,13 +72,11 @@ class JargonOverloadTool(BaseTool):
 
         result = self.pipeline.invoke({"user_query": query,
                                        "course_requirement": course_requirement,
-                                       "prior_knowledge": prior_knowledge,
                                        'knowledge_gaps': knowledge_gaps})
         return result
 
     async def _arun(self, runtime: ToolRuntime[StudentProfileInterpretation], **input):
         print(f"Running {self.name}...")
-        prior_knowledge = "\n".join(runtime.context.prior_knowledge)
         knowledge_gaps = "\n".join(runtime.context.knowledge_gaps)
 
         args = input.get("input", input)
@@ -91,6 +86,5 @@ class JargonOverloadTool(BaseTool):
 
         result = await self.pipeline.ainvoke({"user_query": query,
                                               "course_requirement": course_requirement,
-                                              "prior_knowledge": prior_knowledge,
                                               'knowledge_gaps': knowledge_gaps})
         return result

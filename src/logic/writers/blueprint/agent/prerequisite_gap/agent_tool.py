@@ -1,4 +1,4 @@
-﻿import json
+import json
 import importlib
 from textwrap import dedent
 
@@ -24,7 +24,7 @@ class PrerequisiteGapTool(BaseTool):
     description_template: str = dedent("""\
     Use this tool to identify prerequisite knowledge gaps and suggest how to bridge them.
     
-    Analyzes the `user_query` against `prior_knowledge` and `knowledge_gaps` to:
+    Analyzes the `user_query` against `knowledge_gaps` to:
     - Extract implicit prerequisites from the content
     - Detect gaps between what the student knows and what they need to know
     - Identify dependency ordering issues among learning objectives
@@ -48,12 +48,10 @@ class PrerequisiteGapTool(BaseTool):
                                             TARGET CONTENT: {user_query}
 
                                             COURSE_REQUIREMENT: {course_requirement}
-
-                                            PRIOR_KNOWLEDGE: {prior_knowledge}
                                             
                                             KNOWLEDGE_GAPS (learning objectives): {knowledge_gaps}
                                             """),
-                            "input_variable": ["user_query", "course_requirement", "prior_knowledge", "knowledge_gaps"]}}
+                            "input_variable": ["user_query", "course_requirement", "knowledge_gaps"]}}
 
         chat_prompt_template = build_standard_chat_prompt_template(input_)
 
@@ -63,7 +61,6 @@ class PrerequisiteGapTool(BaseTool):
 
     def _run(self, runtime: ToolRuntime[StudentProfileInterpretation], **input):
         print(f"Running {self.name}...")
-        prior_knowledge = "\n".join(runtime.context.prior_knowledge)
         knowledge_gaps = "\n".join(runtime.context.knowledge_gaps)
 
         args = input.get("input", input)
@@ -73,13 +70,11 @@ class PrerequisiteGapTool(BaseTool):
 
         result = self.pipeline.invoke({"user_query": query,
                                        "course_requirement": course_requirement,
-                                       "prior_knowledge": prior_knowledge,
                                        'knowledge_gaps': knowledge_gaps})
         return result
 
     async def _arun(self, runtime: ToolRuntime[StudentProfileInterpretation], **input):
         print(f"Running {self.name}...")
-        prior_knowledge = "\n".join(runtime.context.prior_knowledge)
         knowledge_gaps = "\n".join(runtime.context.knowledge_gaps)
 
         args = input.get("input", input)
@@ -89,6 +84,5 @@ class PrerequisiteGapTool(BaseTool):
 
         result = await self.pipeline.ainvoke({"user_query": query,
                                               "course_requirement": course_requirement,
-                                              "prior_knowledge": prior_knowledge,
                                               'knowledge_gaps': knowledge_gaps})
         return result

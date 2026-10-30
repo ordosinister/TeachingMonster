@@ -28,16 +28,12 @@ Return ONLY valid JSON，無 markdown、無註解、無額外文字：
 
 {
   "inferred_level": "",
-  "prior_knowledge": [],
   "knowledge_gaps": [],
   "teaching_adjustments": []
 }
 
 ## inferred_level
 評估受眾對 THIS 主題的實際 readiness（如 "越南初級工程師 — 熟悉本地 ERP 但對台灣法規術語陌生"）。
-
-## prior_knowledge
-受眾已具備的可轉移基礎（如 "熟悉本地品管流程但使用不同模板"）。
 
 ## knowledge_gaps
 阻擋理解 THIS 教材的缺失（如 "教材引用台灣法規術語，越南員工無對應概念"、"案例情境無法與越南市場共鳴"）。

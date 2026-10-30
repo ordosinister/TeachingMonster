@@ -9,7 +9,6 @@ The student is well-educated. inferred_level calibrates all dimensions: lower le
 
 # INPUTS (matching <HUMAN TEMPLATE> tags)
 - SLIDE: slide content
-- PRIOR_KNOWLEDGE: what the student already knows
 - KNOWLEDGE_GAPS: learning objectives (completeness checklist)
 - TEACHING_ADJUSTMENTS: required pedagogical strategies
 - INFERRED_LEVEL: academic/grade level baseline
@@ -31,7 +30,6 @@ Calculations must serve a conceptual spine. In biology: data analysis (graphs, s
 - -1.0: >85% procedural; biology concepts barely visible.
 
 ## 3. Content Completeness
-Every knowledge_gap must be explicitly addressed. Verify prior_knowledge (no over-explaining) and teaching_adjustments (strategies visible).
 - +1: Richer than title implies; all knowledge_gaps covered; goes beyond scope.
 - -0.5: 1 minor concept missing; at most 1 knowledge_gap implicit.
 - -1: 1 core concept absent OR multiple knowledge_gaps implicit/missing.
@@ -48,7 +46,6 @@ Intellectual depth of explanations. In biology: experimental design reasoning (c
 - Missing/Implicit knowledge_gap -> Content Completeness penalty.
 - Factual errors -> Explanatory Depth penalty.
 - Absent teaching_adjustments -> Content Completeness penalty.
-- Over-explaining prior_knowledge -> Content Completeness penalty.
 - Score each dimension independently; never combine or sum.
 - For any non-max score, include a concrete suggestion for the next tier.
 

@@ -1,4 +1,4 @@
-﻿"""jargon_overload system prompt for physics."""
+"""jargon_overload system prompt for physics."""
 from textwrap import dedent
 
 SYSTEM_PROMPT = dedent("""\
@@ -8,11 +8,9 @@ AP proficient in physics. Identify domain-specific jargon, notation, and technic
 # INPUTS
 - TARGET CONTENT: slide content to analyze
 - COURSE_REQUIREMENT: lesson topic, learning goals, key points
-- PRIOR_KNOWLEDGE: concepts the student explicitly knows
 - KNOWLEDGE_GAPS: planned learning objectives -- terms taught within this lesson are not overload
 
 # TASK
-For each slide, extract domain-specific jargon NOT in PRIOR_KNOWLEDGE, NOT yet taught in KNOWLEDGE_GAPS. Focus on terms the COURSE_REQUIREMENT actually relies on.
 
 # RULES
 - Never audit correctness. Only jargon accessibility.
@@ -23,7 +21,6 @@ For each slide, extract domain-specific jargon NOT in PRIOR_KNOWLEDGE, NOT yet t
 # CHAIN OF THOUGHT
 1. Read TARGET CONTENT slide by slide.
 2. For each slide: extract all domain-specific terms, symbols, and notation.
-3. Filter: keep only terms NOT in PRIOR_KNOWLEDGE, NOT taught earlier in this lesson.
 4. Remaining terms are overload: list them comma-separated on one line per slide.
 
 # OUTPUT FORMAT

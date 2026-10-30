@@ -30,8 +30,7 @@ intuition → representation → formal definition → proof → application
 Return ONLY valid JSON:
 
 {
- "prior_knowledge": [],
- "knowledge_gaps": [],
+  "knowledge_gaps": [],
  "teaching_adjustments": []
 }
 
@@ -39,21 +38,6 @@ Return ONLY valid JSON:
 
 # DEFINITIONS
 
-## 1. prior_knowledge
-Identify stable cognitive and mathematical foundations available to the student.
-
-Rules:
-- Must be concrete and usable for instruction
-- Must describe reasoning ability, not vague ability labels
-- May include algebraic, geometric, or logical reasoning skills
-
-Examples (format reference only):
-- "basic algebraic manipulation of linear equations"
-- "ability to interpret graphs of simple functions"
-- "familiarity with numerical patterns and sequences"
-- "basic logical reasoning in step-by-step problems"
-
----
 
 ## 2. knowledge_gaps
 Identify ONLY missing prerequisites that BLOCK understanding of `<COURSE_REQUIREMENT>`.
@@ -123,7 +107,6 @@ This is critical for AP content standard alignment.
 ---
 
 ## 4. Abstraction Level Control
-- `prior_knowledge` defines highest safe abstraction level
 - `knowledge_gaps` defines required scaffolding layers before formal rigor
 
 ---

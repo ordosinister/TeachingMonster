@@ -29,7 +29,7 @@ class SlideBase(BaseModel):
  description="<TRANSITION_TO_NEXT>. One sentence transition connecting this slide to the next concept"
  )
 
- jargon: str = Field(description="Jargon terms used in this slide that may need pre-explanation or substitution. List comma-separated terms that are not in prior_knowledge and not yet taught in knowledge_gaps")
+ jargon: str = Field(description="Jargon terms used in this slide that may need pre-explanation or substitution. List comma-separated terms that are not yet taught in knowledge_gaps")
 
 
 class ConceptCheckSlide(SlideBase):
@@ -52,7 +52,6 @@ class AlgorithmWalkthroughSlide(SlideBase):
 
 class StudentProfileInterpretation(BaseModel):
  inferred_level: str = Field(..., description="Estimated academic level")
- prior_knowledge: List[str] = Field(..., description="What the student likely already knows")
  knowledge_gaps: List[str] = Field(..., description="Potential gaps to scaffold around")
  teaching_adjustments: List[str] = Field(..., description="How explanations will be adapted")
 

@@ -1,4 +1,4 @@
-﻿from textwrap import dedent
+from textwrap import dedent
 
 
 SYSTEM_PROMPT = dedent("""

@@ -30,8 +30,7 @@ observation → conceptual model → physical law → mathematical formulation �
 Return ONLY valid JSON:
 
 {
- "prior_knowledge": [],
- "knowledge_gaps": [],
+  "knowledge_gaps": [],
  "teaching_adjustments": []
 }
 
@@ -39,21 +38,6 @@ Return ONLY valid JSON:
 
 # DEFINITIONS
 
-## 1. prior_knowledge
-Identify stable foundational reasoning abilities relevant to physics learning.
-
-Rules:
-- Must be concrete and instructionally usable
-- Focus on reasoning skills, not memorized physics content
-- May include mathematical and intuitive physical reasoning readiness
-
-Examples (format reference only):
-- "basic algebraic manipulation of equations"
-- "understanding of everyday cause-and-effect relationships"
-- "ability to interpret simple graphs and trends"
-- "familiarity with basic spatial reasoning (distance, direction, motion intuition)"
-
----
 
 ## 2. knowledge_gaps
 Identify ONLY missing prerequisites that BLOCK understanding of `<COURSE_REQUIREMENT>`.
@@ -126,7 +110,6 @@ Determine whether student can interpret:
 ---
 
 ## 5. Abstraction Layer Control
-- `prior_knowledge` defines safe starting level for physical reasoning
 - `knowledge_gaps` define missing conceptual layers needed before formal physics laws
 
 ---

@@ -1,4 +1,4 @@
-﻿import json
+import json
 import os
 from textwrap import dedent
 from glob import glob

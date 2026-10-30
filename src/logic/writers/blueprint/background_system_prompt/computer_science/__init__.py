@@ -25,27 +25,12 @@ This model will directly control all downstream lesson generation.
 Return ONLY valid JSON:
 
 {
- "prior_knowledge": [],
- "knowledge_gaps": [],
+  "knowledge_gaps": [],
  "teaching_adjustments": []
 }
 
 # DEFINITIONS
 
-## 1. prior_knowledge
-Identify ONLY stable cognitive foundations the student can reliably use.
-
-Requirements:
-- Must be concrete and usable in instruction
-- Must NOT be vague labels (e.g., "good at math")
-- Must represent actual transferable skills or knowledge
-
-Examples:
-- "high-school algebraic manipulation"
-- "basic reading of diagrams or visual representations"
-- "familiarity with everyday decision-making logic"
-
----
 
 ## 2. knowledge_gaps
 Identify ONLY missing concepts that will BLOCK understanding of `<COURSE_REQUIREMENT>`.
@@ -95,7 +80,6 @@ This stage is diagnostic ONLY.
 Every `teaching_adjustment` MUST map to at least one `prerequisite_gap`.
 
 ## 4. Abstraction Control
-- `prior_knowledge` defines highest safe starting point
 - `knowledge_gaps` define required scaffolding targets
 
 ## 5. Precision Over Completeness

@@ -1,4 +1,4 @@
-﻿import importlib
+import importlib
 import json
 import os
 from textwrap import dedent
@@ -105,11 +105,9 @@ class SlideAuditTool(BaseTool):
 
                     COURSE_REQUIREMENT: {course_requirement}
 
-                    PRIOR_KNOWLEDGE: {prior_knowledge}
-
                     KNOWLEDGE_GAPS (learning objectives): {knowledge_gaps}
                 """),
-                "input_variable": ["user_query", "course_requirement", "prior_knowledge", "knowledge_gaps"]
+                "input_variable": ["user_query", "course_requirement", "knowledge_gaps"]
             }
         }
         prereq_pipeline = build_standard_chat_prompt_template(prereq_input) | llm | StrOutputParser()
@@ -122,11 +120,9 @@ class SlideAuditTool(BaseTool):
 
                     COURSE_REQUIREMENT: {course_requirement}
 
-                    PRIOR_KNOWLEDGE: {prior_knowledge}
-
                     KNOWLEDGE_GAPS (learning objectives): {knowledge_gaps}
                 """),
-                "input_variable": ["user_query", "course_requirement", "prior_knowledge", "knowledge_gaps"]
+                "input_variable": ["user_query", "course_requirement", "knowledge_gaps"]
             }
         }
         jargon_pipeline = build_standard_chat_prompt_template(jargon_input) | llm | StrOutputParser()
@@ -163,7 +159,6 @@ class SlideAuditTool(BaseTool):
 
     def _run(self, runtime: ToolRuntime[StudentProfileInterpretation], **input):
         print(f"Running {self.name}...")
-        prior_knowledge = "\n".join(runtime.context.prior_knowledge)
         knowledge_gaps = "\n".join(runtime.context.knowledge_gaps)
 
         args = input.get("input", input)
@@ -184,7 +179,6 @@ class SlideAuditTool(BaseTool):
         result = self.pipeline.invoke({
             "user_query": query,
             "course_requirement": course_requirement,
-            "prior_knowledge": prior_knowledge,
             "knowledge_gaps": knowledge_gaps
         })
 
@@ -201,7 +195,6 @@ class SlideAuditTool(BaseTool):
 
     async def _arun(self, runtime: ToolRuntime[StudentProfileInterpretation], **input):
         print(f"Running {self.name}...")
-        prior_knowledge = "\n".join(runtime.context.prior_knowledge)
         knowledge_gaps = "\n".join(runtime.context.knowledge_gaps)
 
         args = input.get("input", input)
@@ -222,7 +215,6 @@ class SlideAuditTool(BaseTool):
         result = await self.pipeline.ainvoke({
             "user_query": query,
             "course_requirement": course_requirement,
-            "prior_knowledge": prior_knowledge,
             "knowledge_gaps": knowledge_gaps
         })
 

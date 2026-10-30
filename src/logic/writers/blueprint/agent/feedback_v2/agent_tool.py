@@ -1,4 +1,4 @@
-﻿import importlib
+import importlib
 import json
 import os
 from textwrap import dedent
@@ -49,15 +49,13 @@ class FeedbackTool(BaseTool):
                 "template": dedent("""
                     SLIDE: {user_query}
 
-                    PRIOR_KNOWLEDGE: {prior_knowledge}
-
                     KNOWLEDGE_GAP: {knowledge_gaps}
 
                     TEACHING_ADJUSTMENTS: {teaching_adjustments}
 
                     INFERRED_LEVEL: {inferred_level}
                 """),
-                "input_variable": ["user_query", "prior_knowledge", "knowledge_gaps", "teaching_adjustments", "inferred_level"]
+                "input_variable": ["user_query", "knowledge_gaps", "teaching_adjustments", "inferred_level"]
             }
         }
         pipeline = build_standard_chat_prompt_template(input_) | llm | StrOutputParser()
@@ -72,7 +70,6 @@ class FeedbackTool(BaseTool):
 
     def _run(self, runtime: ToolRuntime[StudentProfileInterpretation], **input):
         print(f"Running {self.name}...")
-        prior_knowledge = "\n".join(runtime.context.prior_knowledge)
         knowledge_gaps = "\n".join(runtime.context.knowledge_gaps)
         teaching_adjustments = "\n".join(runtime.context.teaching_adjustments)
         inferred_level = runtime.context.inferred_level
@@ -91,7 +88,6 @@ class FeedbackTool(BaseTool):
 
         result = self.pipeline.invoke({
             "user_query": query,
-            "prior_knowledge": prior_knowledge,
             "knowledge_gaps": knowledge_gaps,
             "teaching_adjustments": teaching_adjustments,
             "inferred_level": inferred_level
@@ -110,7 +106,6 @@ class FeedbackTool(BaseTool):
 
     async def _arun(self, runtime: ToolRuntime[StudentProfileInterpretation], **input):
         print(f"Running {self.name}...")
-        prior_knowledge = "\n".join(runtime.context.prior_knowledge)
         knowledge_gaps = "\n".join(runtime.context.knowledge_gaps)
         teaching_adjustments = "\n".join(runtime.context.teaching_adjustments)
         inferred_level = runtime.context.inferred_level
@@ -129,7 +124,6 @@ class FeedbackTool(BaseTool):
 
         result = await self.pipeline.ainvoke({
             "user_query": query,
-            "prior_knowledge": prior_knowledge,
             "knowledge_gaps": knowledge_gaps,
             "teaching_adjustments": teaching_adjustments,
             "inferred_level": inferred_level

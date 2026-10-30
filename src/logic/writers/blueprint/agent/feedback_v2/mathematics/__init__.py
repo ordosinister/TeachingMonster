@@ -9,7 +9,6 @@ The student is well-educated. inferred_level calibrates all dimensions: lower le
 
 # INPUTS (matching <HUMAN TEMPLATE> tags)
 - SLIDE: slide content
-- PRIOR_KNOWLEDGE: what the student already knows
 - KNOWLEDGE_GAPS: learning objectives (completeness checklist)
 - TEACHING_ADJUSTMENTS: required pedagogical strategies
 - INFERRED_LEVEL: academic/grade level baseline
@@ -31,7 +30,6 @@ Symbolic manipulation must serve a conceptual spine. In math: plug-and-chug vs. 
 - -1.0: >85% calculation; mathematical concepts barely visible.
 
 ## 3. Content Completeness
-Every knowledge_gap must be explicitly addressed. Verify prior_knowledge (no over-explaining) and teaching_adjustments (strategies visible). Mathematical errors = content failure.
 - +1: Richer than title implies; all knowledge_gaps covered; mathematically correct; goes beyond scope.
 - -0.5: 1 minor concept missing; at most 1 knowledge_gap implicit; minor errors.
 - -1: 1 core concept absent OR multiple knowledge_gaps implicit/missing; significant errors.
@@ -49,7 +47,6 @@ Intellectual depth of explanations. In math: proof depth (sketching proofs where
 - Mathematical errors -> Content Completeness penalty.
 - Lack of mathematical rigor -> Explanatory Depth penalty.
 - Absent teaching_adjustments -> Content Completeness penalty.
-- Over-explaining prior_knowledge -> Content Completeness penalty.
 - Score each dimension independently; never combine or sum.
 - For any non-max score, include a concrete suggestion for the next tier.
 
