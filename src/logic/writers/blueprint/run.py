@@ -22,18 +22,17 @@ from langchain_core.exceptions import OutputParserException
 from langchain_core.messages import HumanMessage
 from glob import glob
 from model_orchestration import get_model_config
+from src.logic.writers.blueprint.post_processing.consistency_check import run_consistency_check
 
-from src.path.path_definition import get_project_dir
-from src.logic.writers.blueprint.generation_pipeline import (create_presentation_pipeline, create_slide_pipeline,
-                                                             create_background_pipeline)
+from src.logic.writers.blueprint.agent import AGENT_INSTRUCTION
+from src.logic.writers.blueprint.agent.context import AgentContext
 from src.logic.writers.blueprint.agent.finetuning.agent_tool import FineTuningTool
 from src.logic.writers.blueprint.agent.slide_audit.agent_tool import SlideAuditTool
 from src.logic.writers.blueprint.agent.feedback.agent_tool import FeedbackTool
+from src.logic.writers.blueprint.generation_pipeline import (create_presentation_pipeline, create_slide_pipeline,
+                                                             create_background_pipeline)
 from src.logic.writers.blueprint.structured_output import LessonBlueprint
-from src.logic.writers.blueprint.agent import AGENT_INSTRUCTION
-from src.logic.writers.blueprint.post_processing.math_validation import run_math_validation
-
-from src.logic.writers.blueprint.post_processing.concept_supervision import run_concept_supervision
+from src.path.path_definition import get_project_dir
 
 def _get_cache_key(course_requirement: str, persona: str) -> str:
     """Generate a cache key from (course_requirement, persona).
@@ -138,8 +137,15 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
         ]
     )
 
-    agent_input = {"messages": HumanMessage(content=request_id)}
-    agent_result = agent.invoke(agent_input, context=output.student_profile)
+    context = AgentContext(
+        knowledge_gaps=output.student_profile.knowledge_gaps,
+        teaching_adjustments=output.student_profile.teaching_adjustments,
+        request_id=request_id,
+        cache_key=cache_key
+    )
+
+    agent_input = {"messages": HumanMessage(content="")}
+    agent_result = agent.invoke(agent_input, context=context)
 
     print(agent_result['messages'][-1])
 
@@ -163,10 +169,10 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
         except Exception as e:
             print(f"request_id: {request_id}, exception: {e}")
 
-    # --- Math Verification ---
-    slide_output = run_math_validation(slide_output, target_dir, env)
-
-    slide_output = run_concept_supervision(slide_output, env, output_filename)
+    # --- Consistency Check ---
+    slide_output = run_consistency_check(
+        slide_output, course_requirement, pedagogical_state, target_dir, env, output_filename
+    )
 
     # Cache the completed blueprint for future (course_requirement, persona) reuse.
     _save_to_cache(cache_key, target_dir)

@@ -1,5 +1,3 @@
-import importlib
-import json
 import os
 from textwrap import dedent
 from glob import glob
@@ -11,7 +9,9 @@ from pydantic import BaseModel, Field
 
 from src.path.path_definition import get_project_dir
 from src.logic import build_standard_chat_prompt_template
-from src.logic.writers.blueprint.structured_output import StudentProfileInterpretation, LessonBlueprint
+from src.logic.writers.blueprint.structured_output import LessonBlueprint
+from src.logic.writers.blueprint.agent.feedback import SYSTEM_PROMPT
+from src.logic.writers.blueprint.agent.context import AgentContext
 
 SUMMARIZE_AUDIT_PROMPT = dedent("""\
 # Goal
@@ -85,15 +85,14 @@ class FeedbackTool(BaseTool):
 
         return cls(pipeline=pipeline, summarize_pipeline=summarize_pipeline)
 
-    def _run(self, runtime: ToolRuntime[StudentProfileInterpretation], **input):
+    def _run(self, runtime: ToolRuntime[AgentContext], **input):
         print(f"Running {self.name}...")
         knowledge_gaps = "\n".join(runtime.context.knowledge_gaps)
         teaching_adjustments = "\n".join(runtime.context.teaching_adjustments)
+        request_id = runtime.context.request_id
+        cache_key = runtime.context.cache_key
 
-        args = input.get("input", input)
-
-        request_id = args['request_id']
-        target_dir = os.path.join(get_project_dir(), "data", request_id)
+        target_dir = os.path.join(get_project_dir(), "data", request_id, cache_key)
 
         drafts = sorted(glob(f"{os.path.join(target_dir, 'draft')}/*.json"), key=os.path.getmtime)
 
@@ -119,15 +118,15 @@ class FeedbackTool(BaseTool):
         summary = self.summarize_pipeline.invoke({"report": result})
         return f"# FeedbackTool\n{summary}"
 
-    async def _arun(self, runtime: ToolRuntime[StudentProfileInterpretation], **input):
+    async def _arun(self, runtime: ToolRuntime[AgentContext], **input):
         print(f"Running {self.name}...")
         knowledge_gaps = "\n".join(runtime.context.knowledge_gaps)
         teaching_adjustments = "\n".join(runtime.context.teaching_adjustments)
+        request_id = runtime.context.request_id
+        cache_key = runtime.context.cache_key
 
-        args = input.get("input", input)
-
-        request_id = args['request_id']
-        target_dir = os.path.join(get_project_dir(), "data", request_id)
+        # args = input.get("input", input)
+        target_dir = os.path.join(get_project_dir(), "data", request_id, cache_key)
 
         drafts = sorted(glob(f"{os.path.join(target_dir, 'draft')}/*.json"), key=os.path.getmtime)
 
