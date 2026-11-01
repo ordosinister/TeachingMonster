@@ -1,3 +1,4 @@
+
 import json
 import os
 from glob import glob
@@ -16,20 +17,9 @@ from src.logic.writers.blueprint.agent.context import AgentContext
 from src.logic.writers.blueprint.structured_output import LessonBlueprint
 
 
-# class Inputs(BaseModel):
-#     feedback: str = Field(description="Feedback from one audit tool: slide_audit_tool, feedback_tool")
-
-
 class FineTuningTool(BaseTool):
 
     name: str = "finetuning_tool"
-    # description_template: str = dedent("""\
-    # Use this tool to extract improvements from audit feedback and merge them into the slide content and speaker notes.
-    #
-    # input format: {input_format_instructions}
-    # """)
-    #
-    # description: str = description_template.format(input_format_instructions=input_format_instructions)
 
     description: str = dedent("""\
     Use this tool to extract improvements from audit feedback and merge them into the slide content and speaker notes.
@@ -51,6 +41,10 @@ class FineTuningTool(BaseTool):
                     <FEEDBACK>: {feedback}
                     
                     <SLIDE_AUDIT>: {slide_audit}
+                    
+                    <PERSONA>: {persona}
+                    
+                    <KNOWLEDGE_GAPS>: {knowledge_gaps}
                 """),
             }
         }
@@ -61,7 +55,7 @@ class FineTuningTool(BaseTool):
 
         merge_input = {
             "system": {"template": MERGE_SYSTEM_PROMPT,
-                       "partial_variables": {'format_instructions': format_instructions}},
+                       "partial_variables": {"format_instructions": format_instructions}},
             "human": {
                 "template": dedent("""
                     <SLIDES>: {user_query}
@@ -81,37 +75,19 @@ class FineTuningTool(BaseTool):
         )
         return cls(pipeline=pipeline)
 
-    # @staticmethod
-    # def _resolve_feedback(target_dir: str, feedback: str) -> str:
-    #     """Detect tool source from feedback tag and load the latest full result."""
-    #     tool_folders = {
-    #         "# SlideAuditTool": "slide_audit",
-    #         "# FeedbackTool": "feedback",
-    #     }
-    #     for tag, folder in tool_folders.items():
-    #         if tag in feedback:
-    #             full_dir = os.path.join(target_dir, folder)
-    #             if os.path.isdir(full_dir):
-    #                 files = sorted(glob(os.path.join(full_dir, "*.txt")), key=os.path.getmtime)
-    #                 if files:
-    #                     with open(files[-1], "r", encoding="utf-8") as f:
-    #                         return f.read()
-    #             break
-    #     return feedback
-
     def _run(self, runtime: ToolRuntime[AgentContext, Any], **input):
         print(f"Running {self.name}...")
         args = input.get("input", input)
 
-        feedback = args.get('feedback', "")
+        feedback = args.get("feedback", "")
 
         request_id = runtime.context.request_id
         cache_key = runtime.context.cache_key
+        persona = runtime.context.persona
+        knowledge_gaps = "\n".join(runtime.context.knowledge_gaps)
 
         input_filename = os.path.join(get_project_dir(), "data", request_id, "input.json")
         target_dir = os.path.join(get_project_dir(), "data", request_id, cache_key)
-
-        # full_feedback = self._resolve_feedback(target_dir, feedback)
 
         slide_audit = runtime.context.slide_audit
         if slide_audit is None:
@@ -121,7 +97,7 @@ class FineTuningTool(BaseTool):
         if feedback is None:
             return "Feedback is not available, please call the Tool `feedback_tool`"
 
-        drafts = sorted(glob(f"{os.path.join(target_dir, 'draft')}/*.json"), key=os.path.getmtime)
+        drafts = sorted(glob(f"{os.path.join(target_dir, "draft")}/*.json"), key=os.path.getmtime)
 
         with open(input_filename, "r", encoding="utf-8") as f:
             input_data = json.load(f)
@@ -137,7 +113,9 @@ class FineTuningTool(BaseTool):
             "user_query": query,
             "course_requirement": course_requirement,
             "feedback": feedback,
-            "slide_audit": slide_audit
+            "slide_audit": slide_audit,
+            "persona": persona,
+            "knowledge_gaps": knowledge_gaps,
         })
 
         filename = os.path.join(target_dir, "draft", f"version_{len(drafts)}.json")
@@ -153,15 +131,17 @@ class FineTuningTool(BaseTool):
         print(f"Running {self.name}...")
         args = input.get("input", input)
 
-        feedback = args.get('feedback', "")
+        feedback = args.get("feedback", "")
 
         request_id = runtime.context.request_id
         cache_key = runtime.context.cache_key
+        persona = runtime.context.persona
+        knowledge_gaps = "\n".join(runtime.context.knowledge_gaps)
 
         input_filename = os.path.join(get_project_dir(), "data", request_id, "input.json")
         target_dir = os.path.join(get_project_dir(), "data", request_id, cache_key)
 
-        drafts = sorted(glob(f"{os.path.join(target_dir, 'draft')}/*.json"), key=os.path.getmtime)
+        drafts = sorted(glob(f"{os.path.join(target_dir, "draft")}/*.json"), key=os.path.getmtime)
 
         with open(input_filename, "r", encoding="utf-8") as f:
             input_data = json.load(f)
@@ -172,8 +152,6 @@ class FineTuningTool(BaseTool):
             loaded = LessonBlueprint.model_validate_json(f.read())
 
         query = "\n\n".join([str(slide.model_dump()) for slide in loaded.slides])
-
-        # full_feedback = self._resolve_feedback(target_dir, feedback)
 
         slide_audit = runtime.context.slide_audit
         if slide_audit is None:
@@ -187,7 +165,9 @@ class FineTuningTool(BaseTool):
             "user_query": query,
             "course_requirement": course_requirement,
             "feedback": feedback,
-            "slide_audit": slide_audit
+            "slide_audit": slide_audit,
+            "persona": persona,
+            "knowledge_gaps": knowledge_gaps,
         })
 
         filename = os.path.join(target_dir, "draft", f"version_{len(drafts)}.json")

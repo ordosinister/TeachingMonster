@@ -1,3 +1,4 @@
+
 import json
 import os
 from glob import glob
@@ -72,13 +73,6 @@ A 2-3 sentence summary of the audit.
 
 class SlideAuditTool(BaseTool):
     name: str = "slide_audit_tool"
-    # description_template: str = dedent("""\
-    # Use this tool to audit slides for prerequisite knowledge gaps and jargon overload issues.
-    #
-    # Runs prerequisite gap analysis and jargon overload detection in parallel, then merges into one report.
-    # """)
-
-    # description: str = description_template.format(input_format_instructions=input_format_instructions)
 
     description: str = dedent("""\
         Use this tool to audit slides for prerequisite knowledge gaps and jargon overload issues.
@@ -98,13 +92,13 @@ class SlideAuditTool(BaseTool):
                 "template": dedent("""
                     <TARGET_CONTENT>: {user_query}
 
-                    <COURSE_REQUIREMENT?: {course_requirement}
+                    <COURSE_REQUIREMENT>: {course_requirement}
                     
                     <KNOWLEDGE_GAPS> (learning objectives): {knowledge_gaps}
                     
                     <PERSONA>: {persona}
                 """),
-                "input_variable": ["user_query", "course_requirement", "knowledge_gaps"]
+                "input_variable": ["user_query", "course_requirement", "knowledge_gaps", "persona"]
             }
         }
         prereq_pipeline = build_standard_chat_prompt_template(prereq_input) | llm | StrOutputParser()
@@ -168,7 +162,7 @@ class SlideAuditTool(BaseTool):
         with open(input_filename, "r", encoding="utf-8") as f:
             course_requirement = json.load(f)["course_requirement"]
 
-        drafts = sorted(glob(f"{os.path.join(target_dir, 'draft')}/*.json"), key=os.path.getmtime)
+        drafts = sorted(glob(f"{os.path.join(target_dir, "draft")}/*.json"), key=os.path.getmtime)
 
         with open(drafts[-1], "r", encoding="utf-8") as f:
             loaded = LessonBlueprint.model_validate_json(f.read())
@@ -201,13 +195,15 @@ class SlideAuditTool(BaseTool):
 
         request_id = runtime.context.request_id
         cache_key = runtime.context.cache_key
+        persona = runtime.context.persona
+
         input_filename = os.path.join(get_project_dir(), "data", request_id, "input.json")
         target_dir = os.path.join(get_project_dir(), "data", request_id, cache_key)
 
         with open(input_filename, "r", encoding="utf-8") as f:
             course_requirement = json.load(f)["course_requirement"]
 
-        drafts = sorted(glob(f"{os.path.join(target_dir, 'draft')}/*.json"), key=os.path.getmtime)
+        drafts = sorted(glob(f"{os.path.join(target_dir, "draft")}/*.json"), key=os.path.getmtime)
 
         with open(drafts[-1], "r", encoding="utf-8") as f:
             loaded = LessonBlueprint.model_validate_json(f.read())
@@ -217,7 +213,8 @@ class SlideAuditTool(BaseTool):
         result = await self.pipeline.ainvoke({
             "user_query": query,
             "course_requirement": course_requirement,
-            "knowledge_gaps": knowledge_gaps
+            "knowledge_gaps": knowledge_gaps,
+            "persona": persona
         })
 
         feedback_dir = os.path.join(target_dir, "slide_audit")
@@ -232,4 +229,3 @@ class SlideAuditTool(BaseTool):
 
         summary = await self.summarize_pipeline.ainvoke({"report": result})
         return f"# SlideAuditTool\n{summary}"
-
