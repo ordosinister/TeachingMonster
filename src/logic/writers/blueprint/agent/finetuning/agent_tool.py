@@ -97,7 +97,7 @@ class FineTuningTool(BaseTool):
         if feedback is None:
             return "Feedback is not available, please call the Tool `feedback_tool`"
 
-        drafts = sorted(glob(f"{os.path.join(target_dir, "draft")}/*.json"), key=os.path.getmtime)
+        drafts = sorted(glob(f"{os.path.join(target_dir, 'draft')}/*.json"), key=os.path.getmtime)
 
         with open(input_filename, "r", encoding="utf-8") as f:
             input_data = json.load(f)
@@ -141,7 +141,7 @@ class FineTuningTool(BaseTool):
         input_filename = os.path.join(get_project_dir(), "data", request_id, "input.json")
         target_dir = os.path.join(get_project_dir(), "data", request_id, cache_key)
 
-        drafts = sorted(glob(f"{os.path.join(target_dir, "draft")}/*.json"), key=os.path.getmtime)
+        drafts = sorted(glob(f"{os.path.join(target_dir, 'draft')}/*.json"), key=os.path.getmtime)
 
         with open(input_filename, "r", encoding="utf-8") as f:
             input_data = json.load(f)

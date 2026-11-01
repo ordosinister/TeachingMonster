@@ -1,3 +1,4 @@
+
 import json
 import os
 from glob import glob
@@ -40,15 +41,6 @@ A 2-3 sentence summary with scores and DONE/NOT DONE status.
 
 class FeedbackTool(BaseTool):
     name: str = "feedback_tool"
-    # description_template: str = dedent("""\
-    # Use this tool to audit slide quality across four dimensions: scaffolding, calculation-vs-concept balance, content completeness, and explanatory depth.
-    #
-    # Returns numeric scores + brief reasons for each dimension.
-    #
-    # input format instructions: {input_format_instructions}
-    # """)
-
-    # description: str = description_template.format(input_format_instructions=input_format_instructions)
 
     description: str = dedent("""\
     Use this tool to audit slide quality across four dimensions: scaffolding, calculation-vs-concept balance, content completeness, and explanatory depth.
@@ -73,6 +65,8 @@ class FeedbackTool(BaseTool):
                     <KNOWLEDGE_GAP>: {knowledge_gaps}
 
                     <TEACHING_ADJUSTMENTS>: {teaching_adjustments}
+                    
+                    <PERSONA>: {persona}
                 """),
             }
         }
@@ -90,6 +84,7 @@ class FeedbackTool(BaseTool):
         print(f"Running {self.name}...")
         knowledge_gaps = "\n".join(runtime.context.knowledge_gaps)
         teaching_adjustments = "\n".join(runtime.context.teaching_adjustments)
+        persona = runtime.context.persona
         request_id = runtime.context.request_id
         cache_key = runtime.context.cache_key
 
@@ -99,7 +94,7 @@ class FeedbackTool(BaseTool):
         with open(input_filename, "r", encoding="utf-8") as f:
             course_requirement = json.load(f)["course_requirement"]
 
-        drafts = sorted(glob(f"{os.path.join(target_dir, 'draft')}/*.json"), key=os.path.getmtime)
+        drafts = sorted(glob(f"{os.path.join(target_dir, "draft")}/*.json"), key=os.path.getmtime)
 
         with open(drafts[-1], "r", encoding="utf-8") as f:
             loaded = LessonBlueprint.model_validate_json(f.read())
@@ -110,6 +105,7 @@ class FeedbackTool(BaseTool):
             "user_query": query,
             "knowledge_gaps": knowledge_gaps,
             "teaching_adjustments": teaching_adjustments,
+            "persona": persona,
         })
 
         feedback_dir = os.path.join(target_dir, "feedback")
@@ -129,17 +125,17 @@ class FeedbackTool(BaseTool):
         print(f"Running {self.name}...")
         knowledge_gaps = "\n".join(runtime.context.knowledge_gaps)
         teaching_adjustments = "\n".join(runtime.context.teaching_adjustments)
+        persona = runtime.context.persona
         request_id = runtime.context.request_id
         cache_key = runtime.context.cache_key
 
-        # args = input.get("input", input)
         input_filename = os.path.join(get_project_dir(), "data", request_id, "input.json")
         target_dir = os.path.join(get_project_dir(), "data", request_id, cache_key)
 
         with open(input_filename, "r", encoding="utf-8") as f:
             course_requirement = json.load(f)["course_requirement"]
 
-        drafts = sorted(glob(f"{os.path.join(target_dir, 'draft')}/*.json"), key=os.path.getmtime)
+        drafts = sorted(glob(f"{os.path.join(target_dir, "draft")}/*.json"), key=os.path.getmtime)
 
         with open(drafts[-1], "r", encoding="utf-8") as f:
             loaded = LessonBlueprint.model_validate_json(f.read())
@@ -150,6 +146,7 @@ class FeedbackTool(BaseTool):
             "user_query": query,
             "knowledge_gaps": knowledge_gaps,
             "teaching_adjustments": teaching_adjustments,
+            "persona": persona,
         })
         feedback_dir = os.path.join(target_dir, "feedback")
         if not os.path.isdir(feedback_dir):

@@ -162,7 +162,7 @@ class SlideAuditTool(BaseTool):
         with open(input_filename, "r", encoding="utf-8") as f:
             course_requirement = json.load(f)["course_requirement"]
 
-        drafts = sorted(glob(f"{os.path.join(target_dir, "draft")}/*.json"), key=os.path.getmtime)
+        drafts = sorted(glob(f"{os.path.join(target_dir, 'draft')}/*.json"), key=os.path.getmtime)
 
         with open(drafts[-1], "r", encoding="utf-8") as f:
             loaded = LessonBlueprint.model_validate_json(f.read())
@@ -203,7 +203,7 @@ class SlideAuditTool(BaseTool):
         with open(input_filename, "r", encoding="utf-8") as f:
             course_requirement = json.load(f)["course_requirement"]
 
-        drafts = sorted(glob(f"{os.path.join(target_dir, "draft")}/*.json"), key=os.path.getmtime)
+        drafts = sorted(glob(f"{os.path.join(target_dir, 'draft')}/*.json"), key=os.path.getmtime)
 
         with open(drafts[-1], "r", encoding="utf-8") as f:
             loaded = LessonBlueprint.model_validate_json(f.read())
