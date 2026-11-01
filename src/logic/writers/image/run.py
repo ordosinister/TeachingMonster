@@ -180,7 +180,7 @@ async def process_slide_async(client, slide, image_template_rb, semaphore, env: 
                 - Rendering approach: {style_output.visual_guidance}
                 - Tone: {style_output.tone_descriptor}
                 - AVOID: {style_output.anti_patterns}
-                - **HARD CONSTRAINT -- NO numerical precision**: Do NOT include numerical coordinate values, axis labels with numbers, grid references, tick marks with values, equation annotations with specific numbers, or any precise spatial measurements. This is a conceptual illustration only. Use qualitative spatial language (e.g., "on the left," "above," "in the center," "near the top"). If the visual requires specific x/y values, numeric ranges, coordinate systems, or numbered axes, it was incorrectly classified and should have been a MatplotlibImage -- flag this as an error.
+                - **HARD CONSTRAINT -- NO numerical precision**: Do NOT include specific numbers, axis labels with values, data points with exact figures, percentages, rankings, or any precise quantitative measurements. This is a conceptual illustration only. Use qualitative spatial language (e.g., "on the left," "above," "in the center," "near the top"). If the visual requires specific data values, numeric comparisons, trend lines with concrete figures, or proportional charts, it was incorrectly classified and should have been a MatplotlibImage -- flag this as an error.
                 """)
             else:
 
@@ -206,7 +206,7 @@ async def process_slide_async(client, slide, image_template_rb, semaphore, env: 
 
                         exec(visual_content, {"__builtins__": __builtins__})
 
-                        visual_instruction = "Render a precise mathematical plot with the second image:\n- Prioritize the accuracy of the graph, like copy-paste\n"
+                        visual_instruction = "Render a precise data visualization with the second image:\n- Prioritize the accuracy of data, labels, and proportions, like a professional business report chart\n"
 
                         break
 
