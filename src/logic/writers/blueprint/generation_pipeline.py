@@ -3,10 +3,7 @@
 Each pipeline chains a system prompt, human input template, LLM model,
 and Pydantic output parser into a LangChain Runnable.
 """
-
-import importlib
 from textwrap import dedent
-from typing import Literal
 
 from langchain_core.messages import SystemMessage
 from langchain_core.prompts import PromptTemplate, HumanMessagePromptTemplate, ChatPromptTemplate, \
@@ -16,7 +13,6 @@ from langchain_core.runnables import Runnable
 
 from src.logic.writers.blueprint.structured_output import LessonBlueprint, StudentProfileInterpretation
 from src.logic.writers.blueprint.system_prompt_warehouse.background import SYSTEM_PROMPT as BACKGROUND_SYSTEM_PROMPT
-
 
 
 def create_presentation_pipeline(model) -> Runnable:

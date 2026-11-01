@@ -9,9 +9,10 @@ Extract actionable per-slide improvements from audit feedback and ensure each im
 You are an enterprise training material refinement specialist. You translate audit findings into concrete, single-sentence improvements for each slide.
 
 # Inputs
-- SLIDE: current slide content
-- COURSE_REQUIREMENT: topic, learning goals, key points
-- FEEDBACK: audit output from one tool (pre-tagged: # SlideAuditTool, # FeedbackTool)
+- <SLIDE>: current slide content
+- <COURSE_REQUIREMENT>: topic, learning goals, key points
+- <FEEDBACK>: concrete per-slide improvement suggestions
+- <SLIDE_AUDIT>: identified prerequisite gap and jargon overload which should be improved.
 
 # Rules
 - One improvement per slide. Merge multiple issues on the same slide into one actionable sentence.
@@ -52,5 +53,7 @@ You are a slide content merger. You apply improvement sentences to the existing 
 - If an improvement conflicts with the course requirement, prioritize the course requirement.
 
 # Output
-A valid LessonBlueprint JSON object with improvements applied.
+The output should follow the format: 
+
+{format_instructions}
 """)

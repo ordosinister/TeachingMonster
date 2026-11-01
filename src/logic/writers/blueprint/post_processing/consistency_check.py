@@ -23,10 +23,10 @@ Audit enterprise training slides for internal consistency, requirement coverage,
 You are an enterprise training material consistency auditor. You catch contradictions, coverage gaps, and unadapted source-culture assumptions before delivery.
 
 # Inputs
-- SLIDES: full slide sequence with titles, content, speaker notes, and transitions
-- COURSE_REQUIREMENT: the original topic, learning goals, and key points
-- STUDENT_PERSONA: target audience description (region, background, role)
-- BACKGROUND_ADAPTATIONS: teaching adjustments already identified by the background pipeline
+- <SLIDES>: full slide sequence with titles, content, speaker notes, and transitions
+- <COURSE_REQUIREMENT>: the original topic, learning goals, and key points
+- <STUDENT_PERSONA>: target audience description (region, background, role)
+- <BACKGROUND_ADAPTATIONS>: teaching adjustments already identified by the background pipeline
 
 # Rules
 - Flag contradictions: two slides asserting mutually exclusive facts, policies, or definitions.
@@ -58,9 +58,9 @@ Merge consistency audit corrections into the existing slide draft, preserving st
 You are a slide content merger and gap-filler for enterprise training materials.
 
 # Inputs
-- DRAFT: current LessonBlueprint JSON
-- CONSISTENCY_AUDIT: the auditor findings
-- COURSE_REQUIREMENT: the original topic, learning goals, and key points
+- <DRAFT>: current LessonBlueprint JSON
+- <CONSISTENCY_AUDIT>: the auditor findings
+- <COURSE_REQUIREMENT>: the original topic, learning goals, and key points
 
 # Rules
 - Apply each fix to its corresponding slide. For coverage gaps, insert new slides or expand existing ones.
@@ -72,7 +72,7 @@ You are a slide content merger and gap-filler for enterprise training materials.
 - If a fix conflicts with the course requirement, prioritize the course requirement.
 
 # Output
-A valid LessonBlueprint JSON object with consistency fixes applied.
+Format instruction: {format_instructions}
 """)
 
 
@@ -106,16 +106,16 @@ def run_consistency_check(slide_output: LessonBlueprint, course_requirement: str
         "system": {"template": CONSISTENCY_SYSTEM_PROMPT},
         "human": {
             "template": dedent("""\
-                SLIDES:
+                <SLIDES>:
                 {slides}
 
-                COURSE_REQUIREMENT:
+                <COURSE_REQUIREMENT>:
                 {course_requirement}
 
-                STUDENT_PERSONA:
+                <STUDENT_PERSONA>:
                 {persona}
 
-                BACKGROUND_ADAPTATIONS:
+                <BACKGROUND_ADAPTATIONS?:
                 {adaptations}
             """),
             "input_variable": ["slides", "course_requirement", "persona", "adaptations"]
@@ -150,20 +150,20 @@ def run_consistency_check(slide_output: LessonBlueprint, course_requirement: str
     format_instructions = output_parser.get_format_instructions()
 
     merge_input = {
-        "system": {"template": CONSISTENCY_MERGE_PROMPT},
+        "system": {"template": CONSISTENCY_MERGE_PROMPT,
+                   "partial_variables": {'format_instructions': format_instructions}},
         "human": {
             "template": dedent("""\
-                Fix all consistency issues in {draft} with
+                Fix all consistency issues in 
+                
+                <DRAFT>: {draft} 
+                
+                with
 
-                Consistency audit results:
-                {audit}
+                <CONSISTENCY_AUDIT>: {audit}
 
-                Course requirement: {course_requirement}
-
-                Output instruction = {format_instructions}
-            """),
-            "input_variable": ["draft", "audit", "course_requirement"],
-            "partial_variables": {'format_instructions': format_instructions}
+                <COURSE_REQUIREMENT>: {course_requirement}
+            """)
         }
     }
 

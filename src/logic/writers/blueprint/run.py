@@ -67,6 +67,9 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
 
     env = os.environ['env']
 
+    model_main = get_model_config(env)['main']
+    model_sub = get_model_config(env)['sub']
+
     logger.info(f"{request_id}")
 
     # Check (course_requirement, persona) cache before running pipeline.
@@ -81,48 +84,56 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
     if os.path.isfile(output_filename):
         return course_requirement, persona
 
-    model_main = get_model_config(env)['main']
-    model_sub = get_model_config(env)['sub']
-
-    background_pipeline = create_background_pipeline(model_main)
-
-    while True:
-        try:
-            pedagogical_state = background_pipeline.invoke({
-                "course_requirement": course_requirement,
-                "student_persona": persona
-            })
-            break
-        except OutputParserException:
-            logger.info(f"{request_id} Background Parsing Error")
-
-    logger.info(f"{request_id} {cache_key} pedagogical_state: {pedagogical_state}")
-
-    presentation_pipeline = create_presentation_pipeline(get_model_config(env)['master'])
-
-    logger.info(f"Start drafting {request_id}")
-
-    while True:
-        try:
-            output = presentation_pipeline.invoke({
-                "course_requirement": course_requirement,
-                "student_persona": persona,
-                "pedagogical_state": pedagogical_state
-            })
-            break
-        except OutputParserException:
-            logger.info(f"{request_id} Drafting Parsing Error")
-
     draft_dir = os.path.join(target_dir, "draft")
     if not os.path.isdir(draft_dir):
         os.makedirs(draft_dir)
 
-    with open(os.path.join(draft_dir, "version_0.json"), "w", encoding="utf-8") as f:
-        f.write(output.model_dump_json(indent=2))
+    draft_v0 = os.path.join(draft_dir, "version_0.json")
 
-    tools = [SlideAuditTool.create(llm=model_main),
+    if not os.path.isfile(draft_v0):
+
+        background_pipeline = create_background_pipeline(model_main)
+
+        while True:
+            try:
+                pedagogical_state = background_pipeline.invoke({
+                    "course_requirement": course_requirement,
+                    "student_persona": persona
+                })
+                break
+            except OutputParserException:
+                logger.info(f"{request_id} Background Parsing Error")
+
+        logger.info(f"{request_id} {cache_key} pedagogical_state: {pedagogical_state}")
+
+        presentation_pipeline = create_presentation_pipeline(get_model_config(env)['master'])
+
+        logger.info(f"Start drafting {request_id}/{cache_key}")
+
+        while True:
+            try:
+                output = presentation_pipeline.invoke({
+                    "course_requirement": course_requirement,
+                    "student_persona": persona,
+                    "pedagogical_state": pedagogical_state
+                })
+                break
+            except OutputParserException:
+                logger.info(f"{request_id} Drafting Parsing Error")
+
+        with open(os.path.join(draft_dir, "version_0.json"), "w", encoding="utf-8") as f:
+            f.write(output.model_dump_json(indent=2))
+
+    else:
+        with open(draft_v0, "r", encoding="utf-8") as f:
+            output = LessonBlueprint.model_validate_json(f.read())
+
+
+    tools = [
+             SlideAuditTool.create(llm=model_main),
              FeedbackTool.create(llm=model_main),
-             FineTuningTool.create(llm=model_sub)]
+             FineTuningTool.create(llm=model_sub)
+             ]
 
     agent = create_agent(
         model=model_main,
@@ -141,10 +152,14 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
         knowledge_gaps=output.student_profile.knowledge_gaps,
         teaching_adjustments=output.student_profile.teaching_adjustments,
         request_id=request_id,
-        cache_key=cache_key
+        cache_key=cache_key,
+        feedback=None,
+        slide_audit=None
     )
 
-    agent_input = {"messages": HumanMessage(content="")}
+    USER_QUERY = "Execute the slide audit and refinement pipeline."
+
+    agent_input = {"messages": HumanMessage(content=USER_QUERY)}
     agent_result = agent.invoke(agent_input, context=context)
 
     print(agent_result['messages'][-1])
@@ -173,7 +188,6 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
     slide_output = run_consistency_check(
         slide_output, course_requirement, pedagogical_state, target_dir, env, output_filename
     )
-
     # Cache the completed blueprint for future (course_requirement, persona) reuse.
     _save_to_cache(cache_key, target_dir)
 
@@ -182,19 +196,26 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
 
 if __name__ == "__main__":
 
-    course_requirement = dedent("""
-          Big Concept: Triangle Centers
-Topic: Comparing Triangle Centers in Different Contexts
-Bloom's Taxonomy: analyze, evaluate
-Learning Goal: Analyze: Compare centroid, incenter, and circumcenter
-Evaluate: Determine the most appropriate center in different scenarios and justify the reasoning
-Key Learning Points: Properties of centroid, incenter, and circumcenter
-Distance relationships (to sides vs vertices)
-Functional differences of triangle centers
-          """)
+    import json
 
-    student_persona = dedent("""
-         Grade: 9th gradeFocus Time: 15 minutesBackground Knowledge: Has: basic definitions of triangle centersLacks: ability to compare and apply concepts in different contexts
-          """)
-    os.environ['env'] = "PROD"
-    main("abcdefgh", course_requirement, student_persona)
+    from extraction.powerpoint import main as powerpoint_main
+    from src.path.path_definition import get_project_dir
+
+    os.environ['env'] = "DEV"
+
+    request_id = powerpoint_main.run(pptx_path=r"data/Attire for Sales Professionals 241113 updated 3.pptx")
+
+    print(request_id)
+
+    input_dir = os.path.join(get_project_dir(), "data", request_id)
+
+    input_filename = os.path.join(input_dir, "input.json")
+
+    with open(input_filename, "r", encoding="utf-8") as f:
+        course_requirement = json.load(f)
+
+    course_requirement = json.dumps(course_requirement)
+
+    student_persona = "台灣的新進員工"
+
+    main(request_id, course_requirement, student_persona)
