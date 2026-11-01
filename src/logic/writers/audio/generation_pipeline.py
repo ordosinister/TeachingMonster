@@ -5,7 +5,7 @@ from langchain_core.prompts import PromptTemplate, HumanMessagePromptTemplate, C
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import Runnable
 
-from src.logic.writers.tts import SYSTEM_PROMPT
+from src.logic.writers.audio import SYSTEM_PROMPT
 
 
 def create_presentation_pipeline(model) -> Runnable:
@@ -13,7 +13,7 @@ def create_presentation_pipeline(model) -> Runnable:
      system_message = SystemMessage(content=SYSTEM_PROMPT)
      human_prompt = PromptTemplate(template=dedent("""
      <COURSE_REQUIREMENT>: {course_requirement}
-     <STUDENT_PERSONA>: {student_persona}>
+     <PERSONA>: {student_persona}
      """),
      input_variables=["course_requirement", "student_persona"]
      )
@@ -38,18 +38,15 @@ if __name__ == "__main__":
  pipeline = create_presentation_pipeline(model)
 
  course_requirement = dedent("""
- Big Concept: Triangle Centers
- Topic: Comparing Triangle Centers in Different Contexts
- Bloom's Taxonomy: analyze, evaluate
- Learning Goal: Analyze: Compare centroid, incenter, and circumcenter
- Evaluate: Determine the most appropriate center in different scenarios and justify the reasoning
- Key Learning Points: Properties of centroid, incenter, and circumcenter
- Distance relationships (to sides vs vertices)
- Functional differences of triangle centers
+ Topic: Customer Complaint Handling Procedure
+ Learning Goal: Guide staff to identify complaint types, apply the appropriate escalation protocol, and document resolution steps
+ Key Learning Points: Active listening techniques, escalation matrix, documentation requirements, follow-up timeline
  """)
 
  student_persona = dedent("""
- Grade: 9th gradeFocus Time: 15 minutesBackground Knowledge: Has: basic definitions of triangle centersLacks: ability to compare and apply concepts in different contexts
+ Region: Vietnam
+ Language Ability: Intermediate English, native Vietnamese
+ Business/Technical Background: Frontline customer service staff, 6 months tenure, familiar with basic CRM but new to escalation protocols
  """)
 
  output = pipeline.invoke({"course_requirement": course_requirement, "student_persona": student_persona})

@@ -1,32 +1,21 @@
-"""Text-to-Speech audio generation for image narration.
-
-Generates voice profiles calibrated to student personas and synthesizes
-MP3 audio clips for each image's speaker notes.
-"""
-
 import asyncio
 import json
-import os
 import logging
+import os
 from pathlib import Path
 from textwrap import dedent
 from typing import List, Literal
 
-"""Text-to-Speech audio generation for image narration.
-
-Generates voice profiles calibrated to student personas and synthesizes
-MP3 audio clips for each image"s speaker notes.
-"""
-
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Text to Speech")
 
 from openai import AsyncOpenAI
 from mutagen.mp3 import MP3
 
-from src.path.path_definition import get_project_dir
 from initialization import credential_init
 from model_orchestration import get_model_config
-from src.logic.writers.tts.generation_pipeline import create_presentation_pipeline
+from src.logic.writers.audio.generation_pipeline import create_presentation_pipeline
+from src.path.path_definition import get_project_dir
 
 
 credential_init()
@@ -43,7 +32,7 @@ async def process_tts_async(client, slide_number: int, text: str, output_dir: st
         while True:
             try:
                 async with client.audio.speech.with_streaming_response.create(
-                    model="gpt-4o-mini-tts",
+                    model="gpt-4o-mini-audio",
                     voice="marin",
                     instructions=instructions,
                     input=text
@@ -78,11 +67,11 @@ async def process_concurrent(client, script: List[dict], request_id: str, instru
     results = await asyncio.gather(*tasks)
     return results
 
-def main(request_id: str, subject: Literal["physics", "biology", "mathematics", "computer_science"]):
+def main(request_id: str, cache_key: str, persona: str):
 
     env = os.environ['env']
 
-    source_dir = os.path.join(get_project_dir(), "data", request_id)
+    source_dir = os.path.join(get_project_dir(), "data", request_id, cache_key)
     filename = os.path.join(source_dir, f"blueprint_adapted.json")
     
     with open(filename, "r", encoding="utf-8") as f:
@@ -95,14 +84,15 @@ def main(request_id: str, subject: Literal["physics", "biology", "mathematics", 
 
     with open(input_path, "r", encoding="utf-8") as f:
         input_data = json.load(f)
+
     course_requirement = input_data["course_requirement"]
-    student_persona = input_data["student_persona"]
+    student_persona = persona
 
     vibe = pipeline.invoke({"course_requirement": course_requirement, "student_persona": student_persona})
 
     instructions = dedent(f"""\
     # Role
-    You are an AP {subject} teacher and you speak in plain English with soft, intimate tone, and remove all the Latex notation. Decode all the abbreviation according to the context."
+    You are an enterprise internal training narrator. You speak clearly and naturally, adapting your language to the audience's proficiency. Remove any formatting notation (LaTeX, markup) and decode abbreviations according to the business context. Maintain a professional yet approachable tone.
     
     # Vibe:                     
     {vibe}                
@@ -114,18 +104,15 @@ def main(request_id: str, subject: Literal["physics", "biology", "mathematics", 
 if __name__ == "__main__":
 
     course_requirement = dedent("""
-    Big Concept: Geometric Properties and Relationships
-Topic: Multi-scenario Applications of Triangle Centers
-Bloom's Taxonomy: analyze, evaluate, apply
-Learning Goal: Guide students to differentiate between the functional roles of the Incenter and Circumcenter based on distance requirements, and model at least TWO distinct real-world applications
-Key Learning Points: Incenter (equidistant to sides), Circumcenter (equidistant to vertices), Optimization, Modeling.
+    Topic: Customer Complaint Handling Procedure
+Learning Goal: Guide staff to identify complaint types, apply the appropriate escalation protocol, and document resolution steps
+Key Learning Points: Active listening techniques, escalation matrix, documentation requirements, follow-up timeline
               """)
 
     student_persona = dedent("""
-             Grade: 9th Grade
-Focus Time: 15 minutes
-Background Knowledge: Basic definitions of medians, angle bisectors, and perpendicular bisectors; ability to read coordinates.
+    Region: Vietnam
+Language Ability: Intermediate English, native Vietnamese
+Business/Technical Background: Frontline customer service staff, 6 months tenure, familiar with basic CRM but new to escalation protocols
               """)
 
-    main(request_id="celery_2500_1777682484", subject='physics', course_requirement=course_requirement,
-         student_persona=student_persona)
+    main(request_id="demo_001", cache_key="demo_ck", persona=student_persona)

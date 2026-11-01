@@ -33,7 +33,7 @@ logger = logging.getLogger("main process")
 from src.logic.writers.blueprint import run as run_blueprint
 from src.logic.writers.adaptation import run as run_adaptation
 from src.logic.writers.image import run as run_image
-from src.logic.writers.tts import run as run_tts
+from src.logic.writers.audio import run as run_tts
 from src.logic.writers.video_gen import run as run_video
 
 

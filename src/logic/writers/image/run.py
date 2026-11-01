@@ -1,27 +1,13 @@
-"""Slide image generation: renders educational slides from adapted blueprints.
-
-Uses gpt-image-2 (OpenAI) with a layout template to generate high-quality
-PNG image images. Supports text-only, diagram, and mixed layouts with
-concurrent processing (up to 4 slides at once).
-"""
-from langchain_classic.chains.question_answering.map_rerank_prompt import output_parser
-
-"""Slide image generation: renders educational slides from adapted blueprints.
-
-Uses gpt-image-2 (OpenAI) with a layout template to generate high-quality
-PNG image images. Supports text-only, diagram, and mixed layouts with
-concurrent processing (up to 4 slides at once).
-"""
-
 import asyncio
 import base64
 import json
 import os
 import logging
 from textwrap import dedent
-from typing import Optional, List, Literal
+from typing import Optional, List
 
-logger = logging.getLogger("Image Merge")
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("Image Generation")
 
 import aiofiles
 from openai import AsyncOpenAI, APIConnectionError
@@ -56,7 +42,7 @@ async def openai_call(client, prompt: str, image: List, image_temp: Optional[str
             while True:
                 try:
                     result_edit = await client.images.edit(
-                        model="gpt-image-2",
+                        model="gpt-image-2.5-flare",
                         image=image,
                         prompt=prompt,
                         quality=get_model_config(env)['image_quality'],
@@ -73,7 +59,7 @@ async def openai_call(client, prompt: str, image: List, image_temp: Optional[str
         while True:
             try:
                 result_edit = await client.images.edit(
-                    model="gpt-image-2",
+                    model="gpt-image-2.5-sunburst",
                     image=image,
                     prompt=prompt,
                     quality=get_model_config(env)['image_quality'],
@@ -248,7 +234,8 @@ async def process_concurrent(client, script, persona: str,
         context += f"\n===================================\n-Slide number {slide_number}\n\n-Slide content:\n{slide['slide_content']}"
 
     # Determine visual style based on image prompt + course context
-    source_dir = os.path.dirname(output_dir)
+    source_dir = os.path.dirname(os.path.dirname(output_dir))
+
     input_json_path = os.path.join(source_dir, "input.json")
     with open(input_json_path, "r", encoding="utf-8") as f:
         input_data = json.load(f)
@@ -401,7 +388,8 @@ if __name__ == "__main__":
 
     os.environ['env'] = 'DEV'
 
-    main(request_id="celery_4953_1781285309", subject='physics')
+    main(request_id="01aa1889f2d4c3e75f4c6013db743e09b4edaca190cc45fe98270d81afb08331",
+         cache_key="a97294bb5efc6db3", persona="台灣的新進員工")
 
 
 
