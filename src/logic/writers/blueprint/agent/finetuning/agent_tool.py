@@ -22,7 +22,7 @@ class FineTuningTool(BaseTool):
     name: str = "finetuning_tool"
 
     description: str = dedent("""\
-    Use this tool to extract improvements from audit feedback and merge them into the slide content and speaker notes.
+    Use this tool to extract improvements from audit feedback and merge them into the image content and speaker notes.
     """)
 
     pipeline: Runnable

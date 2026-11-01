@@ -23,7 +23,7 @@ Audit enterprise training slides for internal consistency, requirement coverage,
 You are an enterprise training material consistency auditor. You catch contradictions, coverage gaps, and unadapted source-culture assumptions before delivery.
 
 # Inputs
-- <SLIDES>: full slide sequence with titles, content, speaker notes, and transitions
+- <SLIDES>: full image sequence with titles, content, speaker notes, and transitions
 - <COURSE_REQUIREMENT>: the original topic, learning goals, and key points
 - <STUDENT_PERSONA>: target audience description (region, background, role)
 - <BACKGROUND_ADAPTATIONS>: teaching adjustments already identified by the background pipeline
@@ -36,7 +36,7 @@ You are an enterprise training material consistency auditor. You catch contradic
 
 # Constraints
 - Never audit mathematical correctness, formula derivation, or scientific facts. Enterprise training has no universal STEM truths.
-- Never propose removing content to fix a gap; propose an additional slide or expansion.
+- Never propose removing content to fix a gap; propose an additional image or expansion.
 - Cultural residue only when the target audience would be confused, not merely when wording is unfamiliar.
 
 # Output
@@ -55,7 +55,7 @@ CONSISTENCY_MERGE_PROMPT = dedent("""\
 Execute every correction identified by the consistency audit, transforming the draft into a structurally sound, requirement-complete, and culturally adapted LessonBlueprint.
 
 # Role
-You are a surgical slide content corrector and gap-filler for enterprise training materials. You do not rewrite for style; you fix exactly what the audit flagged, respecting PERSONA\'s perspective.
+You are a surgical image content corrector and gap-filler for enterprise training materials. You do not rewrite for style; you fix exactly what the audit flagged, respecting PERSONA\'s perspective.
 
 # Inputs
 - <DRAFT>: current LessonBlueprint JSON
@@ -67,12 +67,12 @@ You are a surgical slide content corrector and gap-filler for enterprise trainin
 ## Contradictions
 - Resolve every contradiction by choosing the version that aligns with COURSE_REQUIREMENT.
 - If both conflicting statements contradict COURSE_REQUIREMENT, prioritize the one more consistent with PERSONA\'s business/technical background.
-- Update speaker_notes if the contradiction resolution changes the slide\'s meaning.
+- Update speaker_notes if the contradiction resolution changes the image\'s meaning.
 
 ## Coverage Gaps
 - Every gap listed under "Coverage Gaps" must be closed by adding or expanding slides.
 - New slides must be inserted at the logical dependency position, not appended at the end.
-- Each added slide must connect to neighboring slides via valid transition_to_next.
+- Each added image must connect to neighboring slides via valid transition_to_next.
 
 ## Cultural Residues
 - Replace or bridge every residue so that PERSONA can understand it without prior source-region knowledge.
@@ -81,7 +81,7 @@ You are a surgical slide content corrector and gap-filler for enterprise trainin
 - Do NOT simply remove the residue; always substitute with an accessible equivalent.
 
 # Constraints
-- Preserve all slide fields (title, content, speaker_notes, transition_to_next). Do not drop existing content unless it directly contradicts the audit fix.
+- Preserve all image fields (title, content, speaker_notes, transition_to_next). Do not drop existing content unless it directly contradicts the audit fix.
 - Do not add learning objectives or key points beyond those in COURSE_REQUIREMENT.
 - If an audit suggestion conflicts with COURSE_REQUIREMENT or PERSONA\'s constraints, prioritize COURSE_REQUIREMENT > PERSONA constraints.
 - Output must be valid JSON matching the LessonBlueprint schema.
@@ -97,7 +97,7 @@ def run_consistency_check(slide_output: LessonBlueprint, course_requirement: str
     """Run consistency audit and merge corrections into slides.
 
     Args:
-        slide_output: The current LessonBlueprint slide output.
+        slide_output: The current LessonBlueprint image output.
         course_requirement: The original course requirement string.
         pedagogical_state: StudentProfileInterpretation from the background pipeline.
         target_dir: Directory to save audit artifacts.

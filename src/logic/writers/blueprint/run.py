@@ -1,6 +1,6 @@
 """Blueprint generation: creates structured lesson plans from course requirements.
 
-Uses LLM-based pipelines to generate ordered slide sequences with titles,
+Uses LLM-based pipelines to generate ordered image sequences with titles,
 content, speaker notes, and transitions. Includes subject classification,
 multi-agent feedback loops, and mathematical validation.
 """
@@ -63,7 +63,7 @@ def _save_to_cache(cache_key: str, source_dir: str) -> None:
     shutil.copytree(source_dir, cache_dir)
 
 
-def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, str]:
+def main(request_id: str, course_requirement: str, persona: str) -> str:
 
     env = os.environ['env']
 
@@ -82,7 +82,7 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
 
     output_filename = os.path.join(target_dir, "blueprint.json")
     if os.path.isfile(output_filename):
-        return course_requirement, persona
+        return cache_key
 
     draft_dir = os.path.join(target_dir, "draft")
     if not os.path.isdir(draft_dir):
@@ -166,7 +166,7 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
         persona=persona
     )
 
-    USER_QUERY = "Execute the slide audit and refinement pipeline."
+    USER_QUERY = "Execute the image audit and refinement pipeline."
 
     agent_input = {"messages": HumanMessage(content=USER_QUERY)}
     agent_result = agent.invoke(agent_input, context=context)
@@ -200,7 +200,7 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
     # Cache the completed blueprint for future (course_requirement, persona) reuse.
     # _save_to_cache(cache_key, target_dir)
 
-    return course_requirement, persona
+    return cache_key
 
 
 if __name__ == "__main__":

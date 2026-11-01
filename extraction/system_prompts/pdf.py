@@ -124,7 +124,7 @@ The extracted information must be:
 - Suitable for corporate employee training.
 - Reusable as input for automated presentation generation.
 
-Do not generate presentation slides, slide titles, speaker notes, or visual design instructions.
+Do not generate presentation slides, image titles, speaker notes, or visual design instructions.
 
 Your task ends at training objective and content extraction.
 

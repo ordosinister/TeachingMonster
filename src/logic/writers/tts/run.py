@@ -1,7 +1,7 @@
-"""Text-to-Speech audio generation for slide narration.
+"""Text-to-Speech audio generation for image narration.
 
 Generates voice profiles calibrated to student personas and synthesizes
-MP3 audio clips for each slide's speaker notes.
+MP3 audio clips for each image's speaker notes.
 """
 
 import asyncio
@@ -12,10 +12,10 @@ from pathlib import Path
 from textwrap import dedent
 from typing import List, Literal
 
-"""Text-to-Speech audio generation for slide narration.
+"""Text-to-Speech audio generation for image narration.
 
 Generates voice profiles calibrated to student personas and synthesizes
-MP3 audio clips for each slide"s speaker notes.
+MP3 audio clips for each image"s speaker notes.
 """
 
 logger = logging.getLogger("Text to Speech")
@@ -52,16 +52,16 @@ async def process_tts_async(client, slide_number: int, text: str, output_dir: st
 
                 break
             except Exception as e:
-                logger.info(f"Error processing slide {slide_number}, retrying... {e}")
+                logger.info(f"Error processing image {slide_number}, retrying... {e}")
                 await asyncio.sleep(5)
 
         audio = MP3(speech_file_path)
         duration = audio.info.length
-        logger.info(f"Processed slide {slide_number}, duration: {duration:.2f} seconds")
+        logger.info(f"Processed image {slide_number}, duration: {duration:.2f} seconds")
         return duration
 
 async def process_concurrent(client, script: List[dict], request_id: str, instructions: str, max_concurrent: int = 5):
-    # Updated folder path to be under TeachingMonster/data/slide
+    # Updated folder path to be under TeachingMonster/data/image
     output_dir = os.path.join(get_project_dir(), "data", request_id, "audio")
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)

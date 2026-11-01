@@ -32,7 +32,7 @@ logger = logging.getLogger("main process")
 
 from src.logic.writers.blueprint import run as run_blueprint
 from src.logic.writers.adaptation import run as run_adaptation
-from src.logic.writers.slide import run as run_merge
+from src.logic.writers.image import run as run_image
 from src.logic.writers.tts import run as run_tts
 from src.logic.writers.video_gen import run as run_video
 
@@ -68,28 +68,28 @@ def main(request_id, course_requirement, student_persona):
         blueprint_start_time = time.perf_counter()
 
         logger.info("Step 1: Generating Blueprint...")
-        subject = run_blueprint.main(request_id=request_id, course_requirement=course_requirement,
-                                     persona=student_persona)
+        cache_key = run_blueprint.main(request_id=request_id, course_requirement=course_requirement,
+                                        persona=student_persona)
         blueprint_elapsed = time.perf_counter() - blueprint_start_time
         logger.info(f"Blueprint generation time: {blueprint_elapsed:.2f} seconds")
 
-        logger.info("Step 2: Adaptation Layer...")
-        run_adaptation.main(request_id=request_id)
+        # logger.info("Step 2: Adaptation Layer...")
+        # run_adaptation.main(request_id=request_id)
 
         logger.info("Step 3: Merging Images...")
-        run_merge.main(request_id=request_id, subject=subject)
+        run_image.main(request_id=request_id, cache_key=cache_key)
         image_elapsed = time.perf_counter() - blueprint_start_time
         logger.info(f"Blueprint generation time: {image_elapsed:.2f} seconds")
 
-        logger.info("Step 4: Generating TTS Audio...")
-        run_tts.main(request_id=request_id, subject=subject)
-        image_elapsed = time.perf_counter() - blueprint_start_time
-        logger.info(f"Blueprint generation time: {image_elapsed:.2f} seconds")
-
-        logger.info("Step 5: Assembling Final Video...")
-        run_video.main(request_id=request_id)
-        image_elapsed = time.perf_counter() - blueprint_start_time
-        logger.info(f"Blueprint generation time: {image_elapsed:.2f} seconds")
+        # logger.info("Step 4: Generating TTS Audio...")
+        # run_tts.main(request_id=request_id, subject=subject)
+        # image_elapsed = time.perf_counter() - blueprint_start_time
+        # logger.info(f"Blueprint generation time: {image_elapsed:.2f} seconds")
+        #
+        # logger.info("Step 5: Assembling Final Video...")
+        # run_video.main(request_id=request_id)
+        # image_elapsed = time.perf_counter() - blueprint_start_time
+        # logger.info(f"Blueprint generation time: {image_elapsed:.2f} seconds")
 
         logger.info(f"==========================================================")
         logger.info(f"PIPELINE COMPLETED SUCCESSFULLY for {request_id}")

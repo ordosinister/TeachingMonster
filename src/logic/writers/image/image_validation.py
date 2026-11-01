@@ -1,7 +1,7 @@
 ﻿"""Mathematics image quality validation via vision-model captioning.
 
 Uses the image_caption model from model_orchestration to inspect generated
-slide images and detect serious flaws (coordinate misalignment, equation
+image images and detect serious flaws (coordinate misalignment, equation
 mismatches, etc.) that would confuse students.
 """
 
@@ -36,16 +36,16 @@ VALIDATION_PROMPT = """你是一位數學和物理教育專家。請仔細檢查
 
 
 def validate_math_images(image_types: list, script: dict, output_dir: str, env: str) -> list:
-    """Validate all non-None math slide images and return list of flawed slide numbers.
+    """Validate all non-None math image images and return list of flawed image numbers.
 
     Args:
         image_types: List of (slide_number, type_name) tuples from process_concurrent.
-        script: The full slide script dict with slide content.
-        output_dir: Directory containing the generated slide images.
+        script: The full image script dict with image content.
+        output_dir: Directory containing the generated image images.
         env: Environment key ("DEV" or "PROD") for model selection.
 
     Returns:
-        List of slide numbers flagged as flawed.
+        List of image numbers flagged as flawed.
     """
     non_none_slides = [
         (sn, tn) for sn, tn in image_types
@@ -57,7 +57,7 @@ def validate_math_images(image_types: list, script: dict, output_dir: str, env: 
         if not os.path.isfile(image_path):
             return None
 
-        # Find the slide content for context
+        # Find the image content for context
         slide_content = ""
         for s in script["slides"]:
             if s["slide_number"] == slide_number:

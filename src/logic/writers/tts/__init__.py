@@ -17,7 +17,7 @@ Produce one concise instruction (1-2 sentences) for each voice component. Tailor
 
 - Accent/Affect: regional or stylistic vocal quality
 - Tone: instructional vs conversational register
-- Pacing: Ideal rhythm for this persona's Focus Time and grade-level processing speed. Adjust so each slide digest fits the attention window. Slow for dense concepts, brisk for review. Natural pauses between ideas.
+- Pacing: Ideal rhythm for this persona's Focus Time and grade-level processing speed. Adjust so each image digest fits the attention window. Slow for dense concepts, brisk for review. Natural pauses between ideas.
 - Prosody: Rhythm, stress, intonation. Must reflect the natural inflection of a human teacher. Emphasize key terms; rising contour for questions, falling for conclusions. Exaggerated variation for younger learners, subtle for advanced.
 - Enthusiasm: Energy level calibrated to motivation. High for disengaged learners (pull them in), moderate for self-motivated (avoid patronizing). Never forced. Conveyed through dynamic range and warmth.
 - Emotion: Authentic emotional undertone. Curiosity and excitement for discoveries; calm, patient reassurance for difficult steps. Match content mood.

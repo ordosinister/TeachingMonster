@@ -14,7 +14,7 @@ SYSTEM_PROMPT = dedent("""# Goal
 
 # Rules
 1. 每張幻燈片只傳達一個核心概念。speaker_notes 超過 3–4 個短段落時必須拆頁。
-2. 每個 Learning Goal 對應一組幻燈片群集（slide cluster），受眾能清楚辨認哪幾頁負責哪個目標。
+2. 每個 Learning Goal 對應一組幻燈片群集（image cluster），受眾能清楚辨認哪幾頁負責哪個目標。
 3. 每個 Key Learning Point 必須以顯式形式出現，不可隱含在 speaker_notes 中但未列在 slide_content。
 4. Sequence dependency-first：有先備知識落差（knowledge_gaps）的概念，必須先出現補充頁，再進入本體內容。
 5. teaching_adjustments 必須在結構、風格或節奏上可見地反映——不可只寫在 speaker_notes 裡當作補充說明。

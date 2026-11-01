@@ -24,8 +24,8 @@ Merge prerequisite gap and jargon overload findings into a single unified report
 You are an enterprise training material audit integrator. You combine parallel diagnostic results into a coherent assessment.
 
 # Inputs
-- <PREREQUISITE_GAP>: per-slide gap descriptions with reasons
-- <JARGON_OVERLOAD>: per-slide list of undefined or regionally ambiguous terms
+- <PREREQUISITE_GAP>: per-image gap descriptions with reasons
+- <JARGON_OVERLOAD>: per-image list of undefined or regionally ambiguous terms
 
 # Rules
 - Preserve each gap description and term exactly as received. Never annotate with extra values or interpretations.
@@ -57,7 +57,7 @@ Summarize the audit report in 2-3 sentences, including key scores and the most c
 You are a concise report summarizer.
 
 # Inputs
-- <AUDIT_REPORT>: the full slide audit text
+- <AUDIT_REPORT>: the full image audit text
 
 # Rules
 - Include key scores.

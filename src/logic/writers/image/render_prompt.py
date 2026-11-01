@@ -1,4 +1,4 @@
-﻿"""Prompt builder for gpt-image-2 slide rendering."""
+﻿"""Prompt builder for gpt-image-2 image rendering."""
 
 from textwrap import dedent
 from typing import List
@@ -9,11 +9,11 @@ def build_render_prompt(
     slide_content: List[str],
     visual_instruction: str,
 ) -> str:
-    """Build the gpt-image-2 render prompt for a single slide.
+    """Build the gpt-image-2 render prompt for a single image.
 
     Args:
-        slide_title: The slide's title text.
-        slide_content: List of bullet-point strings for the slide.
+        slide_title: The image's title text.
+        slide_content: List of bullet-point strings for the image.
         visual_instruction: The visual content instruction (diagram description
             or matplotlib compositing instruction).
 
@@ -38,7 +38,7 @@ def build_render_prompt(
 
         TEXT REQUIREMENTS (CRITICAL):
         - Preserve all numbers, equations, and units EXACTLY
-        - IMPORTANT OVERRIDE: $...$ delimiters are LaTeX markup, NOT slide content. Strip the $ symbols from the final image entirely. Render only the enclosed expression as properly formatted mathematical notation (italic variables, upright numbers, proper spacing).
+        - IMPORTANT OVERRIDE: $...$ delimiters are LaTeX markup, NOT image content. Strip the $ symbols from the final image entirely. Render only the enclosed expression as properly formatted mathematical notation (italic variables, upright numbers, proper spacing).
         - Do NOT reword, summarize, or simplify
         - Ensure high readability and clean alignment
         - Use consistent bullet spacing
@@ -52,16 +52,16 @@ def build_render_prompt(
 
         LAYOUT RULES:
         - Maintain clear separation between text and visuals
-        - Do not overcrowd the slide
+        - Do not overcrowd the image
         - Adjust diagram scale if needed to fit cleanly
 
         STYLE:
-        - Professional educational slide
+        - Professional educational image
         - Clean, minimal, high contrast
         - No unnecessary decorations
         - Designed for AP curriculum presentation standards
         - Color coding rule: Blue is used exclusively for key concepts (important terms and core ideas)
         - Key formulas appear in a subtle box or highlight -- exam-ready emphasis
 
-        The final result must look like a polished, academically rigorous AP presentation slide rendered on the provided template.
+        The final result must look like a polished, academically rigorous AP presentation image rendered on the provided template.
     """)

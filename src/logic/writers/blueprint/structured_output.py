@@ -8,9 +8,9 @@ from pydantic import BaseModel, Field
 class SlideBase(BaseModel):
     slide_number: int = Field(..., description="Slide order")
     slide_title: str = Field(..., description="Title displayed at the top")
-    slide_content: List[str] = Field(..., description="Bullet points shown on the slide")
+    slide_content: List[str] = Field(..., description="Bullet points shown on the image")
     speaker_notes: str = Field(..., description="Lecture narration for TTS")
-    transition_to_next: str = Field(..., description="One sentence transition to next slide")
+    transition_to_next: str = Field(..., description="One sentence transition to next image")
 
 
 class StudentProfileInterpretation(BaseModel):

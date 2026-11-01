@@ -1,7 +1,7 @@
 """Slide image generation: renders educational slides from adapted blueprints.
 
 Uses gpt-image-2 (OpenAI) with a layout template to generate high-quality
-PNG slide images. Supports text-only, diagram, and mixed layouts with
+PNG image images. Supports text-only, diagram, and mixed layouts with
 concurrent processing (up to 4 slides at once).
 """
 from langchain_classic.chains.question_answering.map_rerank_prompt import output_parser
@@ -9,7 +9,7 @@ from langchain_classic.chains.question_answering.map_rerank_prompt import output
 """Slide image generation: renders educational slides from adapted blueprints.
 
 Uses gpt-image-2 (OpenAI) with a layout template to generate high-quality
-PNG slide images. Supports text-only, diagram, and mixed layouts with
+PNG image images. Supports text-only, diagram, and mixed layouts with
 concurrent processing (up to 4 slides at once).
 """
 
@@ -30,13 +30,11 @@ from langchain_core.exceptions import OutputParserException
 
 from src.path.path_definition import get_project_dir
 from initialization import credential_init
-from src.logic.writers.slide.image_logic.prompt_generation_pipeline import create_image_prompt_pipeline
-from src.logic.writers.slide.visual_style.style_generation_pipeline import create_visual_style_pipeline
-from src.logic.writers.slide.image_matplotlib.code_generation_pipeline import create_matplotlib_code_pipeline
-from src.logic.writers.slide.render_prompt import build_render_prompt
-# from src.logic.writers.slide.load_agent import create_plot_agent
+from src.logic.writers.image.image_logic.prompt_generation_pipeline import create_image_prompt_pipeline
+from src.logic.writers.image.visual_style.style_generation_pipeline import create_visual_style_pipeline
+from src.logic.writers.image.image_matplotlib.code_generation_pipeline import create_matplotlib_code_pipeline
+from src.logic.writers.image.render_prompt import build_render_prompt
 from model_orchestration import get_model_config
-from src.logic.writers.slide.image_validation import validate_math_images
 
 credential_init()
 
@@ -92,7 +90,7 @@ async def openai_call(client, prompt: str, image: List, image_temp: Optional[str
 
 
 async def process_slide_async(client, slide, image_template_rb, semaphore, env: str, output_filename: str, style_output=None):
-    """Generate a single slide image using gpt-image-2.
+    """Generate a single image image using gpt-image-2.
 
     Args:
         slide: Slide dict with slide_content, speaker_notes, context, etc.
@@ -113,13 +111,13 @@ async def process_slide_async(client, slide, image_template_rb, semaphore, env: 
         context = slide['context']
         image_temp = f"output{slide['slide_number']}.png"
 
-        logger.info(f"Starting slide {slide['slide_number']} image")
+        logger.info(f"Starting image {slide['slide_number']} image")
 
         image_prompt_pipeline = create_image_prompt_pipeline(model=get_model_config(env)["sub"])
 
         while True:
             try:
-                logger.info(f"Starting slide {slide['slide_number']} image classification")
+                logger.info(f"Starting image {slide['slide_number']} image classification")
 
                 output = await image_prompt_pipeline.ainvoke({"slide_content": ",\n".join(slide_content),
                                                               "speaker_notes": speaker_notes,
@@ -134,7 +132,7 @@ async def process_slide_async(client, slide, image_template_rb, semaphore, env: 
         if not output.image_selection:
             # Case 1: Text-Only Layout - Optimized for clarity and whitespace
             prompt = dedent(f"""\
-                            Create a high-quality, minimalist educational slide image using the provided image as the background template.
+                            Create a high-quality, minimalist educational image image using the provided image as the background template.
                             
                             STRICT TEMPLATE RULES:
                             - Use the provided image as the fixed layout and background
@@ -142,7 +140,7 @@ async def process_slide_async(client, slide, image_template_rb, semaphore, env: 
                             - Do NOT alter the template design
 
                             TEXT-CENTRIC LAYOUT (CRITICAL):
-                            - This slide is designed to be text-only for maximum pedagogical clarity.
+                            - This image is designed to be text-only for maximum pedagogical clarity.
                             - Title (place in the title area exactly):
                             {slide_title}
 
@@ -155,13 +153,13 @@ async def process_slide_async(client, slide, image_template_rb, semaphore, env: 
                             - Maintain a clean, professional, and academic aesthetic
                             - Use high contrast and perfect alignment to ensure readability
                             - Preserve all numbers, equations, and units EXACTLY
-                            - IMPORTANT OVERRIDE: $...$ delimiters are LaTeX markup, NOT slide content. Strip the $ symbols from the final image entirely. Render only the enclosed expression as properly formatted mathematical notation (italic variables, upright numbers, proper spacing).
+                            - IMPORTANT OVERRIDE: $...$ delimiters are LaTeX markup, NOT image content. Strip the $ symbols from the final image entirely. Render only the enclosed expression as properly formatted mathematical notation (italic variables, upright numbers, proper spacing).
 
                             VISUAL AREA HANDLING:
                             - Leave the designated visual area of the template clean and empty
                             - Do not attempt to fill the visual space with decorations
 
-                            The final result must look like a polished presentation slide where the clarity of the text is the primary focus.
+                            The final result must look like a polished presentation image where the clarity of the text is the primary focus.
                             """)
 
             result_edit = await openai_call(client, prompt, image)
@@ -228,16 +226,15 @@ async def process_slide_async(client, slide, image_template_rb, semaphore, env: 
         if os.path.isfile(image_temp):
             os.remove(image_temp)
 
-        logger.info(f"Exporting slide {slide['slide_number']} image")
+        logger.info(f"Exporting image {slide['slide_number']} image")
         async with aiofiles.open(output_filename, "wb") as fh:
             await fh.write(base64.b64decode(image_base64))
 
         return (slide['slide_number'], output.image_selection.name if output.image_selection else None)
 
 
-async def process_concurrent(client,
-    script, image_template_rb, output_dir, env: str, max_concurrent=4
-) :
+async def process_concurrent(client, script, persona: str,
+                             image_template_rb, output_dir, env: str, max_concurrent=4):
 
     semaphore = asyncio.Semaphore(max_concurrent)
     tasks = []
@@ -262,7 +259,7 @@ async def process_concurrent(client,
         try:
             style_output = await visual_style_pipeline.ainvoke({
                 "course_requirement": input_data["course_requirement"],
-                "student_persona": input_data["student_persona"],
+                "student_persona": persona,
                 "content": context
             })
             break
@@ -276,11 +273,12 @@ async def process_concurrent(client,
         output_filename = os.path.join(output_dir, f"slide_{slide_number}_image.png")
 
         slide['context'] = context
-        slide['student_persona'] = input_data["student_persona"]
+        slide['student_persona'] = persona
 
         if not os.path.isfile(output_filename):
             logger.info(f"{output_filename} does not exist, add to pipeline")
-            task = process_slide_async(client, slide, image_template_rb, semaphore, env, output_filename=output_filename, style_output=style_output)
+            task = process_slide_async(client, slide, image_template_rb, semaphore, env,
+                                       output_filename=output_filename, style_output=style_output)
             tasks.append(task)
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -292,7 +290,7 @@ async def process_concurrent(client,
 async def fix_general_images(client, flawed_general_slides, image_template_rb, script, output_dir, max_concurrent=4):
     """Fix flawed general images using images.edit API based on validation feedback.
 
-    Runs concurrently with a semaphore. For each flawed slide, reads the existing
+    Runs concurrently with a semaphore. For each flawed image, reads the existing
     image, calls images.edit with a fix prompt derived from the validation text,
     and overwrites the output file with the corrected result.
 
@@ -300,11 +298,11 @@ async def fix_general_images(client, flawed_general_slides, image_template_rb, s
         client: AsyncOpenAI client.
         flawed_general_slides: List of (slide_number, validation_text, type_name) tuples.
         image_template_rb: Template image bytes for the background layout.
-        output_dir: Directory containing slide images.
+        output_dir: Directory containing image images.
         max_concurrent: Maximum concurrent API calls.
 
     Returns:
-        List of slide numbers that were successfully fixed.
+        List of image numbers that were successfully fixed.
     """
     semaphore = asyncio.Semaphore(max_concurrent)
 
@@ -322,7 +320,7 @@ async def fix_general_images(client, flawed_general_slides, image_template_rb, s
                     break
 
             fix_prompt = dedent(f"""\
-            Edit this educational diagram to correct the issues described below. The slide content is the authoritative reference — every element in the diagram must accurately reflect it.
+            Edit this educational diagram to correct the issues described below. The image content is the authoritative reference — every element in the diagram must accurately reflect it.
             
             SLIDE CONTENT (authoritative reference):
             {slide_content}
@@ -333,14 +331,14 @@ async def fix_general_images(client, flawed_general_slides, image_template_rb, s
             EDITING RULES:
             - Make only the minimal edits needed to resolve each issue listed above.
             - Do NOT alter any correct elements: preserve all accurate labels, equations, data points, colors, layout, fonts, and visual styling exactly as they appear.
-            - When an issue describes something incorrect or misaligned, adjust that specific element to match the slide content.
-            - When an issue describes something missing, add only what the slide content specifies — do not introduce extra elements.
+            - When an issue describes something incorrect or misaligned, adjust that specific element to match the image content.
+            - When an issue describes something missing, add only what the image content specifies — do not introduce extra elements.
             - Maintain the same overall composition, diagram type, and visual identity.
             """)
 
             image = [image_template_rb]
 
-            logger.info(f"Fixing general image for slide {sn}")
+            logger.info(f"Fixing general image for image {sn}")
             result_edit = await openai_call(client, fix_prompt, image, image_temp=image_path)
 
             image_base64 = result_edit.data[0].b64_json
@@ -359,25 +357,27 @@ async def fix_general_images(client, flawed_general_slides, image_template_rb, s
     return [r for r in results if r is not None and not isinstance(r, Exception)]
 
 
-def main(request_id: str, subject: Literal["physics", "biology", "mathematics", "computer_science"]):
-    """Generate slide images for all slides in the adapted blueprint.
+def main(request_id: str, cache_key: str, persona: str):
+    """Generate image images for all slides in the adapted blueprint.
 
     Reads blueprint_adapted.json (falls back to blueprint.json), applies
-    visual style analysis, and renders all slide images concurrently.
+    visual style analysis, and renders all image images concurrently.
 
     Args:
         request_id: Unique request identifier for file path resolution.
+        cache_key:
+        persona
     """
 
     env = os.environ['env']
 
-    source_dir = os.path.join(get_project_dir(), "data", request_id)
+    source_dir = os.path.join(get_project_dir(), "data", request_id, cache_key)
 
     output_dir = os.path.join(source_dir, "image")
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
 
-    image_template = os.path.join(get_project_dir(), "layout_template.png")
+    image_template = os.path.join(get_project_dir(), "layout_template_itg.png")
 
     filename = os.path.join(source_dir, f"blueprint_adapted.json")
     if os.path.isfile(filename):
@@ -394,52 +394,8 @@ def main(request_id: str, subject: Literal["physics", "biology", "mathematics", 
 
         max_retries = 3
         retry_count = 0
-        image_types = asyncio.run(process_concurrent(client, script, image_template_rb, output_dir, env, max_concurrent=4))
-
-        if subject not in ["mathematics", "physics"] or not image_types:
-            return
-
-        while retry_count <= max_retries:
-
-            flawed_slides = validate_math_images(image_types, script, output_dir, env)
-            if not flawed_slides:
-                logger.info("All math slides passed quality validation")
-                break
-
-            # Step 1: process the matplotlib image part
-            flawed_matplotlib_slides = [flawed_slide for flawed_slide in flawed_slides if flawed_slide[-1]=='matplotlib']
-
-            # Delete flawed images for regeneration
-            if retry_count < max_retries:
-                for sn, text, type in flawed_matplotlib_slides:
-                    img_path = os.path.join(output_dir, f"slide_{sn}_image.png")
-                    if os.path.isfile(img_path):
-                        os.remove(img_path)
-
-            if flawed_matplotlib_slides:
-                image_matplotlib_types = asyncio.run(process_concurrent(client, script, image_template_rb, output_dir, env, max_concurrent=4))
-            else:
-                image_matplotlib_types = []
-
-            # Step 2: use image2image to fix general images based on flaw reports
-            flawed_general_slides = [flawed_slide for flawed_slide in flawed_slides if flawed_slide[-1] == 'general']
-
-            if flawed_general_slides:
-                logger.info(f"Fixing {len(flawed_general_slides)} flawed general slides: {[sn for sn, _, _ in flawed_general_slides]}")
-                fixed = asyncio.run(fix_general_images(client, flawed_general_slides, image_template_rb, script, output_dir))
-                logger.info(f"Fixed {len(fixed)} general slides: {fixed}")
-
-                image_general_types = [(sn, 'general') for sn in fixed]
-            else:
-                image_general_types = []
-
-            image_types = image_general_types + image_matplotlib_types
-
-            retry_count += 1
-            logger.info(f"Retry {retry_count}/{max_retries}: regenerating {len(flawed_slides)} flawed math slides: {flawed_slides}")
-
-    if retry_count >= max_retries:
-        logger.warning(f"Math slide validation reached max retries ({max_retries}). Some slides may still have issues.")
+        image_types = asyncio.run(process_concurrent(client, script, persona, image_template_rb,
+                                                     output_dir, env, max_concurrent=4))
 
 if __name__ == "__main__":
 

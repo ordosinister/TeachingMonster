@@ -43,7 +43,7 @@ class FeedbackTool(BaseTool):
     name: str = "feedback_tool"
 
     description: str = dedent("""\
-    Use this tool to audit slide quality across four dimensions: scaffolding, calculation-vs-concept balance, content completeness, and explanatory depth.
+    Use this tool to audit image quality across four dimensions: scaffolding, calculation-vs-concept balance, content completeness, and explanatory depth.
 
     Returns numeric scores + brief reasons for each dimension.
 

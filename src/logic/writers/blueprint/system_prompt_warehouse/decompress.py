@@ -1,4 +1,4 @@
-"""Decompress system prompt for enterprise training slide expansion."""
+"""Decompress system prompt for enterprise training image expansion."""
 from textwrap import dedent
 
 SYSTEM_PROMPT = dedent("""\

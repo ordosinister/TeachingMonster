@@ -5,7 +5,7 @@ from langchain_core.runnables import Runnable
 from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 
-from src.logic.writers.slide.image_matplotlib.code_generation_pipeline import create_matplotlib_code_pipeline
+from src.logic.writers.image.image_matplotlib.code_generation_pipeline import create_matplotlib_code_pipeline
 
 class Inputs(BaseModel):
     user_query: str = Field(description="The image prompt")

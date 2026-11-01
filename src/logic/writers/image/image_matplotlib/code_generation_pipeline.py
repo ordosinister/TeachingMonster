@@ -200,4 +200,3 @@ def create_matplotlib_code_pipeline(model):
     pipeline = chat_prompt_template | model# | output_parser
 
     return pipeline, output_parser
-

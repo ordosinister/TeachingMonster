@@ -1,6 +1,6 @@
-"""Video assembly: synchronizes slide images and audio into MP4.
+"""Video assembly: synchronizes image images and audio into MP4.
 
-Uses moviepy to concatenate slide images with their corresponding TTS
+Uses moviepy to concatenate image images with their corresponding TTS
 audio tracks into a final 1080p educational video.
 """
 
@@ -35,9 +35,9 @@ def create_silent_clip(duration, fps=24):
 
 
 def main(request_id: str, buffer_seconds: float = 0.5):
-    """Assemble slide images and audio into a final MP4 video.
+    """Assemble image images and audio into a final MP4 video.
 
-    Reads blueprint.json for slide ordering, pairs each slide image
+    Reads blueprint.json for image ordering, pairs each image image
     with its audio track, concatenates with buffers, and writes the
     final video file.
 
@@ -58,7 +58,7 @@ def main(request_id: str, buffer_seconds: float = 0.5):
 
     output_filename = os.path.join(output_dir, f"final_presentation_{request_id}.mp4")
 
-    # Load the script to determine order and slide numbers
+    # Load the script to determine order and image numbers
     filename = os.path.join(base_slide_dir, f"blueprint.json")
     with open(filename, "r", encoding="utf-8") as f:
         # Using double-load to match the behavior in run_classification.py

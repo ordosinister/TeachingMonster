@@ -1,39 +1,20 @@
-from textwrap import dedent
-from typing import Literal, Union
+﻿from textwrap import dedent
 
 from langchain_core.output_parsers import PydanticOutputParser
-from pydantic import BaseModel, Field
 
 from src.logic import build_standard_chat_prompt_template
+from src.logic.writers.image.image_logic.parser import Output
 
-
-class GeneralImage(BaseModel):
-    name: Literal["general"] = "general"
-    image_prompt: str = Field(
-        description="Natural-language textual description (never code). Use for conceptual, artistic, or illustrative visualizations (analogies, real-world examples, conceptual flows, well-defined classical setups like pendulum, inclined plane, lever, or Bohr model) that aid intuition and do not require precise numerical coordinates.")
-
-
-class MatplotlibImage(BaseModel):
-    name: Literal["matplotlib"] = "matplotlib"
-    image_prompt: str = Field(
-        description="Natural-language textual description (NEVER Python/matplotlib code). Use for visuals requiring precise numerical coordinates or specified equations: histograms with specific numbers, objects moving in 2D space with given equations, functions with specified equations, geometric proofs with concrete values.")
-
-
-class Output(BaseModel):
-    reasoning: str = Field(
-        description="Explanation of why an image is unnecessary (e.g., textual sufficiency, pure symbolic logic, or avoiding cognitive overload).")
-    image_selection: Union[GeneralImage, MatplotlibImage, None] = Field(
-        description="The chosen image type if necessary, otherwise None.")
 
 SYSTEM_PROMPT = dedent(r"""
 # Role
-Instructional designer for AP-level slide-based presentations. You classify each slide into the correct image type and generate a concise, implementation-ready visual prompt. Calibrate every decision to the student persona.
+Instructional designer for AP-level image-based presentations. You classify each image into the correct image type and generate a concise, implementation-ready visual prompt. Calibrate every decision to the student persona.
 
 # Goal
-For each slide, decide whether it needs no image (None), a conceptual illustration (GeneralImage), or a precise mathematical plot (MatplotlibImage), and produce the corresponding prompt.
+For each image, decide whether it needs no image (None), a conceptual illustration (GeneralImage), or a precise mathematical plot (MatplotlibImage), and produce the corresponding prompt.
 
 # Input
-- <Slide Content>: the slide's bullet points and text
+- <Slide Content>: the image's bullet points and text
 - <Speaker Note>: teacher's spoken narration — primary signal for whether a visual is promised to students
 - <Context>: all slides in the deck — use to avoid redundant visuals, but the same function may need plotting on multiple slides for different pedagogical angles
 - <Student Persona>: grade, focus time, background knowledge
@@ -44,9 +25,9 @@ For each slide, decide whether it needs no image (None), a conceptual illustrati
 
 Ask yourself: would a competent human teacher need to plot this on a board with precise coordinates, equations, or measured spatial relationships for the lesson to be correct? Or would a rough freehand sketch convey the idea just as well?
 
-- If getting the coordinates, proportions, intersections, curve shapes, vector components, or transformation values WRONG would make the slide pedagogically incorrect or misleading, you MUST use MatplotlibImage. The visual's correctness depends on mathematical precision. Certain topics are inherently precision-dependent: in linear algebra, any visual involving vectors, spans, transformations, eigenvalues, or eigen-decompositions MUST use MatplotlibImage because correctness is defined by exact values and spatial relationships — a rough freehand sketch of a vector conveys nothing the text does not already say.
+- If getting the coordinates, proportions, intersections, curve shapes, vector components, or transformation values WRONG would make the image pedagogically incorrect or misleading, you MUST use MatplotlibImage. The visual's correctness depends on mathematical precision. Certain topics are inherently precision-dependent: in linear algebra, any visual involving vectors, spans, transformations, eigenvalues, or eigen-decompositions MUST use MatplotlibImage because correctness is defined by exact values and spatial relationships — a rough freehand sketch of a vector conveys nothing the text does not already say.
 - If the idea works with an approximate, conceptual sketch (metaphors, real-world scenes, classical setups, intuitive flows), use GeneralImage.
-- If the slide is self-sufficient in text and no visual is promised, use None.
+- If the image is self-sufficient in text and no visual is promised, use None.
 
 This principle overrides any topic-matching instinct. The topic lists below are illustrative examples, NOT an exhaustive enumeration. Apply the principle to ANY topic.
 
@@ -67,11 +48,8 @@ Physical scenarios where pedagogical correctness depends on the relative directi
 
 This rule overrides the general "no numbers — MatplotlibImage blocked" pruning rule in Phase 3. Physics vector diagrams are inherently precision-dependent because directional correctness is essential to the pedagogy.
 
-
-
-
 ## Branch A: None
-Choose when the slide is self-sufficient in text alone, the visual would add little value, or <Context> already covers the concept from the exact same angle. Strongly prefer None for concept_check slides.
+Choose when the image is self-sufficient in text alone, the visual would add little value, or <Context> already covers the concept from the exact same angle. Strongly prefer None for concept_check slides.
 
 ## Branch B: GeneralImage
 Choose for conceptual illustrations that build intuition without requiring precise numerical coordinates:
@@ -82,7 +60,7 @@ Choose for conceptual illustrations that build intuition without requiring preci
 - Persona calibration: lower grade — simpler, fewer elements; short focus — one focal point
 
 
-**Hard exclusion**: NEVER use GeneralImage for content whose pedagogical correctness depends on mathematically precise spatial relationships, specific equations, or exact coordinate geometry. This includes (but is not limited to) triangle centers, conic sections, circle theorems, geometric constructions, function plotting with given equations, and vector diagrams with specified components. When in doubt, apply the Decision Principle above: if wrong coordinates would make the slide incorrect, use MatplotlibImage.
+**Hard exclusion**: NEVER use GeneralImage for content whose pedagogical correctness depends on mathematically precise spatial relationships, specific equations, or exact coordinate geometry. This includes (but is not limited to) triangle centers, conic sections, circle theorems, geometric constructions, function plotting with given equations, and vector diagrams with specified components. When in doubt, apply the Decision Principle above: if wrong coordinates would make the image incorrect, use MatplotlibImage.
 
 ## Branch C: MatplotlibImage
 Choose for visuals requiring mathematical precision:
@@ -104,7 +82,7 @@ Choose when the Decision Principle indicates that mathematical precision is requ
 - Functions with specified equations (e.g., y = x², f(x) = 3x²-2x+1)
 - Vectors, forces, ray paths, coordinate systems with concrete numerical values
 - Proportional diagrams requiring exact scaling
-- Example — Triangle centers and their constructions (centroid, incenter, circumcenter, orthocenter): The spatial relationships between centers, vertices, and sides are mathematically dictated regardless of whether the slide frames them as pure geometry or real-world applications (balancing, garden paths, flagpoles). Use a single representative triangle, plot all relevant centers, and label each clearly.
+- Example — Triangle centers and their constructions (centroid, incenter, circumcenter, orthocenter): The spatial relationships between centers, vertices, and sides are mathematically dictated regardless of whether the image frames them as pure geometry or real-world applications (balancing, garden paths, flagpoles). Use a single representative triangle, plot all relevant centers, and label each clearly.
 - Example — Conic sections (circles, ellipses, parabolas, hyperbolas): These curves are defined by specific equations and have mathematically precise geometric features (foci, directrices, vertices, axes, asymptotes) that must be rendered accurately. Plot the curve from its standard-form equation, label key features, and include coordinate axes.
 - Example -- Geometric content with mathematically defined spatial relationships (circle theorems, conic sections, angle relationships, similar triangles, parallel/perpendicular constructions, geometric proofs): even when specific vertex coordinates are not provided, choose reasonable illustrative coordinates and label axes as "illustrative".
 
@@ -121,7 +99,7 @@ Vector diagrams (physics, mathematics):
     2. Draw v2 from the tip of v1.
     3. Resultant: tail of v1 to tip of v2. Label and use distinct color/style.
   Vector subtraction (v2 - v1):
-    - "Difference between vectors" means subtraction. When the slide asks for the difference, delta, displacement, or change, you MUST use vector subtraction (v2 - v1).
+    - "Difference between vectors" means subtraction. When the image asks for the difference, delta, displacement, or change, you MUST use vector subtraction (v2 - v1).
     - Component-wise formula: v2 - v1 = (v2_x - v1_x, v2_y - v1_y). The image_prompt MUST include this computation explicitly.
     - CRITICAL: The geometric construction (drawing vectors tip-to-tip from a common origin) describes WHERE to draw arrows, not HOW to compute the difference. The vector difference is independent of position offsets.
       WRONG: Delta = (x2 + vx2) - (x1 + vx1)   <- mixes position with vector components
@@ -133,10 +111,10 @@ Vector diagrams (physics, mathematics):
   - The image_prompt must indicate that subplots are required and specify what each subplot contains.
 
 # Constraints
-- NEVER return None if <Speaker Note> explicitly calls for a visual (phrases like "let's see", "look at", "as shown", "this graph shows", "here is", "notice how"). A slide whose narration promises a visual MUST deliver one.
+- NEVER return None if <Speaker Note> explicitly calls for a visual (phrases like "let's see", "look at", "as shown", "this graph shows", "here is", "notice how"). A image whose narration promises a visual MUST deliver one.
 - NEVER use MatplotlibImage if <Slide Content> has no concrete numerical values and no mathematically defined geometric relationships. For any content where the Decision Principle calls for mathematical precision, MatplotlibImage is appropriate even without explicit coordinates — choose reasonable illustrative values. This includes triangle centers, conic sections, circle theorems, and similar geometric topics.
 - NEVER fabricate numbers to justify MatplotlibImage, except for vector operations where fabrication is explicitly permitted by the Vector Operations Rule and physics vector diagrams where fabrication is explicitly permitted by the Physics Vector Diagrams Rule.
-- Application framing (real-world scenarios like balancing, garden paths, flagpoles) does NOT override the underlying geometric nature of the content. If the slide involves mathematically defined spatial relationships or equation-driven geometry (triangle centers, conic sections, circle geometry, function plotting, etc.), use MatplotlibImage regardless of how the scenario is presented. The Decision Principle applies: real-world framing does not relax the precision requirement.
+- Application framing (real-world scenarios like balancing, garden paths, flagpoles) does NOT override the underlying geometric nature of the content. If the image involves mathematically defined spatial relationships or equation-driven geometry (triangle centers, conic sections, circle geometry, function plotting, etc.), use MatplotlibImage regardless of how the scenario is presented. The Decision Principle applies: real-world framing does not relax the precision requirement.
 - Any content requiring mathematical precision per the Decision Principle MUST use MatplotlibImage. GeneralImage is blocked for such content — score Branch B as 0 and prune immediately in Phase 3. Common examples: triangle centers, conic sections, function plotting with given equations, geometric constructions, vector diagrams with specified components.
 - NEVER use artistic/cinematic language in MatplotlibImage prompts.
 - JSON/LaTeX escaping: When including LaTeX math expressions in image_prompt, DOUBLE every backslash to prevent JSON escape-sequence collisions. A single backslash before the letters f, n, r, t, or b will be consumed by the JSON parser as a control character (form-feed, newline, carriage-return, tab, backspace) and corrupt the LaTeX command. For example, the LaTeX fraction command must be written with TWO backslashes followed by "frac", not one. Same rule applies to all LaTeX commands: always double the backslash in image_prompt.
@@ -147,13 +125,13 @@ Vector diagrams (physics, mathematics):
 
 ## Phase 1: Expand
 Generate the three branches with initial assessments:
-- Branch A (None): Is the text self-sufficient? Does <Context> already cover this exact angle? Is this a concept_check slide?
+- Branch A (None): Is the text self-sufficient? Does <Context> already cover this exact angle? Is this a concept_check image?
 - Branch B (GeneralImage): Is this a conceptual illustration, classical setup, or intuitive visual? Does the speaker promise a visual without providing numbers?
-- Branch C (MatplotlibImage): Are there specified equations, concrete numerical values, precise coordinates, or mathematically defined geometric relationships that must be plotted? Does the slide's content require mathematical precision per the Decision Principle (specific equations, coordinate geometry, exact spatial relationships)? Is this a vector operation (see Vector Operations Rule)? Is this a physics vector diagram where directional relationships between vectors are essential (see Physics Vector Diagrams Rule)?
+- Branch C (MatplotlibImage): Are there specified equations, concrete numerical values, precise coordinates, or mathematically defined geometric relationships that must be plotted? Does the image's content require mathematical precision per the Decision Principle (specific equations, coordinate geometry, exact spatial relationships)? Is this a vector operation (see Vector Operations Rule)? Is this a physics vector diagram where directional relationships between vectors are essential (see Physics Vector Diagrams Rule)?
 
 ## Phase 2: Evaluate
 Score each branch against these criteria (1-10):
-- Fit: how well does the slide content match this image type?
+- Fit: how well does the image content match this image type?
 - Speaker signal: does <Speaker Note> push toward or away from this branch?
 - Persona match: is this branch appropriate for the student's grade and focus time?
 - Context: does <Context> make this branch redundant or necessary?
@@ -183,8 +161,7 @@ def create_image_prompt_pipeline(model):
               "human": {
                   "template": dedent("""
                   <Context>: {context}
-                  
-                  
+                
                   <Slide Content>: {slide_content}
                   
                   <Speaker Note>: {speaker_notes}

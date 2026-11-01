@@ -1,4 +1,4 @@
-﻿"""Adaptation layer: rewrites slide content to match student persona.
+﻿"""Adaptation layer: rewrites image content to match student persona.
 
 Takes a raw lesson blueprint and adapts vocabulary, sentence complexity,
 pacing, and scaffolding to the target student's grade level and background
@@ -28,7 +28,7 @@ ADAPTATION_PROMPT = dedent("""
 
 You are an expert instructional designer, educational psychologist, and lecture adaptation assistant.
 
-Your task is to adapt an existing slide-based lecture presentation to match a target student persona while preserving:
+Your task is to adapt an existing image-based lecture presentation to match a target student persona while preserving:
 - factual correctness
 - logical rigor
 - instructional flow
@@ -42,7 +42,7 @@ You specialize in:
 - aligning explanations to student cognitive level
 
 You understand that:
-- `slide_content` is the visible on-slide text shown to learners
+- `slide_content` is the visible on-image text shown to learners
 - `speakers_note` is the spoken narration delivered by the lecturer
 
 The narration must remain:
@@ -50,7 +50,7 @@ The narration must remain:
 - directly addressed to students
 - natural and speakable
 - step-by-step in reasoning
-- synchronized with visible slide content
+- synchronized with visible image content
 
 
 # INPUT
@@ -112,7 +112,7 @@ The final result should feel like:
 - Preserve terminology that students are expected to learn, but define it naturally when needed.
 - Do not over-explain concepts already listed in the student's known background knowledge.
 - Avoid sudden jumps in abstraction.
-- **First-use definition:** Before adapting, scan all slides to identify where each jargon term first appears. If the `speaker_notes` on that first-occurrence slide do not define the term, add a concise inline definition at the point of first use — even if a full explanation appears later. A later deep-dive does not excuse an unexplained first mention.
+- **First-use definition:** Before adapting, scan all slides to identify where each jargon term first appears. If the `speaker_notes` on that first-occurrence image do not define the term, add a concise inline definition at the point of first use — even if a full explanation appears later. A later deep-dive does not excuse an unexplained first mention.
 
 ## Grade-Level Calibration
 
@@ -145,7 +145,7 @@ The `slide_content` field:
 - should not become lecture narration
 - should preserve visual readability
 
-Good slide content:
+Good image content:
 - keywords
 - structured bullets
 - short explanations
@@ -158,7 +158,7 @@ Avoid:
 
 ## Spatial / Dimensional Explicitness Rule
 
-When slide content describes physical scenarios involving vectors, spatial relationships, or coordinate systems, the adapted `slide_content` MUST explicitly specify the dimensionality and orientation of the system:
+When image content describes physical scenarios involving vectors, spatial relationships, or coordinate systems, the adapted `slide_content` MUST explicitly specify the dimensionality and orientation of the system:
 
 - The plane of motion (e.g., "motion confined to the xy-plane")
 - The direction/axis of each relevant vector quantity (e.g., "gravity $\vec{{g}} = (0, 0, -g)$ along -z", "electric field $\vec{{E}}$ along +x", "velocity $\vec{{v}}$ in the +y direction")
@@ -187,7 +187,7 @@ Insufficient (ambiguous — do NOT write like this):
      ("horizontal," "tabletop," "floor," "slides on," "rolls across" → xy-plane).
   2. Assign gravity/vertical forces to the axis perpendicular to that plane,
      negative by default (−z if motion is in xy, −y if motion is in xz).
-  3. State the assignment explicitly on the first slide that uses it:
+  3. State the assignment explicitly on the first image that uses it:
      "Motion confined to the xy-plane; gravity $\vec{{g}} = (0, 0, -g)$ along −z."
   4. All subsequent slides inherit this frame. Do not redefine axes mid-lecture.
   5. If the scenario provides no context clues, default to:
@@ -203,7 +203,7 @@ The `speakers_note` field MUST:
 - use short rhythmic phrases
 - avoid nested clauses
 - elaborate ONLY on visible `slide_content`
-- avoid introducing orphaned values, symbols, claims, or data points not shown on the slide
+- avoid introducing orphaned values, symbols, claims, or data points not shown on the image
 
 The narration should feel like:
 - live teaching
@@ -240,7 +240,7 @@ Example:
 ## Fidelity Constraints
 
 Maintain:
-- slide order
+- image order
 - instructional intent
 - conceptual dependencies
 - mathematical/scientific correctness
@@ -284,7 +284,7 @@ Internally follow this process before generating output:
    - missing prerequisites
    - likely cognitive difficulty points
 
-2. For each slide:
+2. For each image:
    - estimate conceptual difficulty
    - identify jargon or abstraction level
    - determine which terms need definition
@@ -299,13 +299,13 @@ Internally follow this process before generating output:
    - convert explanation into guided spoken teaching
    - ensure natural verbal rhythm
    - make reasoning explicit enough for the persona
-   - avoid introducing content absent from the slide
+   - avoid introducing content absent from the image
 
 5. Verify:
    - no loss of correctness
    - no unexplained jargon beyond persona level
    - no excessive simplification
-   - narration aligns with slide visuals
+   - narration aligns with image visuals
    - lecture flow remains coherent
 
 Only output the adapted presentation in the required format.
