@@ -31,7 +31,7 @@ from src.logic.writers.blueprint.agent.slide_audit.agent_tool import SlideAuditT
 from src.logic.writers.blueprint.agent.feedback.agent_tool import FeedbackTool
 from src.logic.writers.blueprint.generation_pipeline import (create_presentation_pipeline, create_slide_pipeline,
                                                              create_background_pipeline)
-from src.logic.writers.blueprint.structured_output import LessonBlueprint
+from src.logic.writers.blueprint.structured_output import LessonBlueprint, StudentProfileInterpretation
 from src.path.path_definition import get_project_dir
 
 def _get_cache_key(course_requirement: str, persona: str) -> str:
@@ -89,6 +89,7 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
         os.makedirs(draft_dir)
 
     draft_v0 = os.path.join(draft_dir, "version_0.json")
+    pedagogical_state_filename = os.path.join(draft_dir, "pedagogical_state.json")
 
     if not os.path.isfile(draft_v0):
 
@@ -100,6 +101,10 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
                     "course_requirement": course_requirement,
                     "student_persona": persona
                 })
+
+                with open(pedagogical_state_filename, "w", encoding="utf-8") as f:
+                    f.write(pedagogical_state.model_dump_json(indent=2))
+
                 break
             except OutputParserException:
                 logger.info(f"{request_id} Background Parsing Error")
@@ -127,6 +132,9 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
     else:
         with open(draft_v0, "r", encoding="utf-8") as f:
             output = LessonBlueprint.model_validate_json(f.read())
+
+        with open(pedagogical_state_filename, "r", encoding="utf-8") as f:
+            pedagogical_state = StudentProfileInterpretation.model_validate_json(f.read())
 
 
     tools = [
@@ -183,14 +191,14 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
             })
             break
         except Exception as e:
-            print(f"request_id: {request_id}, exception: {e}")
+            print(f"request_id: {request_id}: cache_key: {cache_key}, exception: {e}")
 
     # --- Consistency Check ---
     slide_output = run_consistency_check(
         slide_output, course_requirement, pedagogical_state, target_dir, env, output_filename
     )
     # Cache the completed blueprint for future (course_requirement, persona) reuse.
-    _save_to_cache(cache_key, target_dir)
+    # _save_to_cache(cache_key, target_dir)
 
     return course_requirement, persona
 

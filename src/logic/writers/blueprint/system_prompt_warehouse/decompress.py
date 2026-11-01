@@ -42,4 +42,6 @@ SYSTEM_PROMPT = dedent("""\
 - student_profile
 - slides（結構與 draft 相同，內容經過豐富化）
 - extension_topic（若 draft 中有）
+
+Output format instructions: {format_instructions}
 """)

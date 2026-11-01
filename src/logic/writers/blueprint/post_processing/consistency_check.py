@@ -52,24 +52,39 @@ Overall Verdict: <Pass / Needs Minor Fixes / Needs Major Rework>
 
 CONSISTENCY_MERGE_PROMPT = dedent("""\
 # Goal
-Merge consistency audit corrections into the existing slide draft, preserving structure and filling identified gaps.
+Execute every correction identified by the consistency audit, transforming the draft into a structurally sound, requirement-complete, and culturally adapted LessonBlueprint.
 
 # Role
-You are a slide content merger and gap-filler for enterprise training materials.
+You are a surgical slide content corrector and gap-filler for enterprise training materials. You do not rewrite for style; you fix exactly what the audit flagged, respecting PERSONA\'s perspective.
 
 # Inputs
 - <DRAFT>: current LessonBlueprint JSON
-- <CONSISTENCY_AUDIT>: the auditor findings
+- <CONSISTENCY_AUDIT>: auditor findings (contradictions, coverage gaps, cultural residues)
 - <COURSE_REQUIREMENT>: the original topic, learning goals, and key points
+- <STUDENT_PERSONA>: target audience description (region, language ability, business/technical background)
 
 # Rules
-- Apply each fix to its corresponding slide. For coverage gaps, insert new slides or expand existing ones.
-- Preserve all slide fields (title, content, speaker_notes, transition_to_next).
-- If a cultural residue is flagged, add a brief bridging sentence or footnote to make the reference accessible.
+## Contradictions
+- Resolve every contradiction by choosing the version that aligns with COURSE_REQUIREMENT.
+- If both conflicting statements contradict COURSE_REQUIREMENT, prioritize the one more consistent with PERSONA\'s business/technical background.
+- Update speaker_notes if the contradiction resolution changes the slide\'s meaning.
+
+## Coverage Gaps
+- Every gap listed under "Coverage Gaps" must be closed by adding or expanding slides.
+- New slides must be inserted at the logical dependency position, not appended at the end.
+- Each added slide must connect to neighboring slides via valid transition_to_next.
+
+## Cultural Residues
+- Replace or bridge every residue so that PERSONA can understand it without prior source-region knowledge.
+- If a residue is a brand name or local abbreviation, add a brief explanatory clause on first use.
+- If a residue is a case example rooted in source-region culture, rewrite it using PERSONA\'s local business context.
+- Do NOT simply remove the residue; always substitute with an accessible equivalent.
 
 # Constraints
+- Preserve all slide fields (title, content, speaker_notes, transition_to_next). Do not drop existing content unless it directly contradicts the audit fix.
+- Do not add learning objectives or key points beyond those in COURSE_REQUIREMENT.
+- If an audit suggestion conflicts with COURSE_REQUIREMENT or PERSONA\'s constraints, prioritize COURSE_REQUIREMENT > PERSONA constraints.
 - Output must be valid JSON matching the LessonBlueprint schema.
-- If a fix conflicts with the course requirement, prioritize the course requirement.
 
 # Output
 Format instruction: {format_instructions}
@@ -115,7 +130,7 @@ def run_consistency_check(slide_output: LessonBlueprint, course_requirement: str
                 <STUDENT_PERSONA>:
                 {persona}
 
-                <BACKGROUND_ADAPTATIONS?:
+                <BACKGROUND_ADAPTATIONS>:
                 {adaptations}
             """),
             "input_variable": ["slides", "course_requirement", "persona", "adaptations"]
@@ -163,6 +178,8 @@ def run_consistency_check(slide_output: LessonBlueprint, course_requirement: str
                 <CONSISTENCY_AUDIT>: {audit}
 
                 <COURSE_REQUIREMENT>: {course_requirement}
+                
+                <STUDENT_PERSONA>: {persona}
             """)
         }
     }
@@ -175,7 +192,8 @@ def run_consistency_check(slide_output: LessonBlueprint, course_requirement: str
             slide_output = merge_pipeline.invoke({
                 "draft": slide_output.model_dump_json(),
                 "audit": audit_result,
-                "course_requirement": course_requirement
+                "course_requirement": course_requirement,
+                "persona": str(pedagogical_state),
             })
             break
         except OutputParserException:
