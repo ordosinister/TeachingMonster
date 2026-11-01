@@ -99,8 +99,10 @@ class SlideAuditTool(BaseTool):
                     <TARGET_CONTENT>: {user_query}
 
                     <COURSE_REQUIREMENT?: {course_requirement}
-
+                    
                     <KNOWLEDGE_GAPS> (learning objectives): {knowledge_gaps}
+                    
+                    <PERSONA>: {persona}
                 """),
                 "input_variable": ["user_query", "course_requirement", "knowledge_gaps"]
             }
@@ -114,10 +116,11 @@ class SlideAuditTool(BaseTool):
                     <TARGET_CONTENT>: {user_query}
 
                     <COURSE_REQUIREMENT>: {course_requirement}
-
+                    
+                    <PERSONA>: {persona}
+                    
                     <KNOWLEDGE_GAPS> (learning objectives): {knowledge_gaps}
                 """),
-                "input_variable": ["user_query", "course_requirement", "knowledge_gaps"]
             }
         }
         jargon_pipeline = build_standard_chat_prompt_template(jargon_input) | llm | StrOutputParser()
@@ -137,7 +140,6 @@ class SlideAuditTool(BaseTool):
                     <JARGON_OVERLOAD>:
                     {jargon_overload}
                 """),
-                "input_variable": ["prerequisite_gap", "jargon_overload"]
             }
         }
         merge_pipeline = build_standard_chat_prompt_template(merge_input) | llm | StrOutputParser()
@@ -158,14 +160,13 @@ class SlideAuditTool(BaseTool):
 
         request_id = runtime.context.request_id
         cache_key = runtime.context.cache_key
+        persona = runtime.context.persona
+
         input_filename = os.path.join(get_project_dir(), "data", request_id, "input.json")
         target_dir = os.path.join(get_project_dir(), "data", request_id, cache_key)
 
-        try:
-            with open(input_filename, "r", encoding="utf-8") as f:
-                course_requirement = json.load(f)["course_requirement"]
-        except:
-            print("")
+        with open(input_filename, "r", encoding="utf-8") as f:
+            course_requirement = json.load(f)["course_requirement"]
 
         drafts = sorted(glob(f"{os.path.join(target_dir, 'draft')}/*.json"), key=os.path.getmtime)
 
@@ -177,7 +178,8 @@ class SlideAuditTool(BaseTool):
         result = self.pipeline.invoke({
             "user_query": query,
             "course_requirement": course_requirement,
-            "knowledge_gaps": knowledge_gaps
+            "knowledge_gaps": knowledge_gaps,
+            "persona": persona
         })
 
         feedback_dir = os.path.join(target_dir, "slide_audit")

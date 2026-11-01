@@ -9,3 +9,4 @@ class AgentContext(BaseModel):
     teaching_adjustments: List[str] = Field(..., description="Strategies to bridge gaps")
     feedback: Optional[str]
     slide_audit: Optional[str]
+    persona: str

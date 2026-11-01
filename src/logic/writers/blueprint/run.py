@@ -154,7 +154,8 @@ def main(request_id: str, course_requirement: str, persona: str) -> Tuple[str, s
         request_id=request_id,
         cache_key=cache_key,
         feedback=None,
-        slide_audit=None
+        slide_audit=None,
+        persona=persona
     )
 
     USER_QUERY = "Execute the slide audit and refinement pipeline."
