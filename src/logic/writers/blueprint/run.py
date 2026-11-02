@@ -210,7 +210,7 @@ if __name__ == "__main__":
 
     import json
 
-    from extraction.powerpoint import main as powerpoint_main
+    from extractors.powerpoint import main as powerpoint_main
     from src.path.path_definition import get_project_dir
 
     os.environ['env'] = "DEV"

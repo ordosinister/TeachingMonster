@@ -1,22 +1,20 @@
 import hashlib
 import json
 import os
-import time
 import shutil
-from typing import Literal
+import time
 
-from extraction.powerpoint.parser import parse_pptx
-from extraction.shared.pipeline import create_pipeline
-from extraction.shared.utils import pptx_to_base64_messages
-from extraction.system_prompt_warehouse.pptx import SYSTEM_PROMPT
+from extractors.powerpoint.generation_pipeline import create_pipeline
+from extractors.powerpoint.parser import parse_pptx, pptx_to_base64_messages
 
 from src.path.path_definition import get_project_dir
+
 
 def run(pptx_path: str):
 
     env = os.environ["env"]
 
-    pipeline = create_pipeline(env=env, system_prompt=SYSTEM_PROMPT)
+    pipeline = create_pipeline(env=env)
 
     start_time = time.time()
 

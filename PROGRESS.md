@@ -33,7 +33,7 @@
 - [x] `post_processing/math_validation.py` + `concept_supervision.py` 刪除（STEM 真理驗證不適用企業內訓）
 - [x] `slide/` → `image/` 目錄遷移（`image_logic/`、`image_matplotlib/`、`visual_style/`、`render_prompt.py`）
 - [x] `tts/` → `audio/` 目錄遷移（`run.py`、`generation_pipeline.py`）
-- [x] `extraction/system_prompts/` → `extraction/system_prompt_warehouse/` 目錄統一
+- [x] `extractors/system_prompts/` → `extractors/system_prompt_warehouse/` 目錄統一
 
 ### Pipeline 結構統一
 - [x] 所有 pipeline 統一使用 `build_standard_chat_prompt_template()`（`generation_pipeline.py`、`create_slide_pipeline`、`consistency_check` 等）

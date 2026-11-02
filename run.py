@@ -43,6 +43,7 @@ def generate_8char_random(str1, str2):
     hash_hex = hash_object.hexdigest()
     return hash_hex[:8]
 
+
 def main(request_id, course_requirement, student_persona):
     """Execute the full video generation pipeline.
 
@@ -76,20 +77,20 @@ def main(request_id, course_requirement, student_persona):
         # logger.info("Step 2: Adaptation Layer...")
         # run_adaptation.main(request_id=request_id)
 
-        logger.info("Step 3: Merging Images...")
+        logger.info("Step 3: Generating Images with txt2img...")
         run_image.main(request_id=request_id, cache_key=cache_key)
         image_elapsed = time.perf_counter() - blueprint_start_time
         logger.info(f"Blueprint generation time: {image_elapsed:.2f} seconds")
 
-        # logger.info("Step 4: Generating TTS Audio...")
-        # run_tts.main(request_id=request_id, subject=subject)
-        # image_elapsed = time.perf_counter() - blueprint_start_time
-        # logger.info(f"Blueprint generation time: {image_elapsed:.2f} seconds")
-        #
-        # logger.info("Step 5: Assembling Final Video...")
-        # run_video.main(request_id=request_id)
-        # image_elapsed = time.perf_counter() - blueprint_start_time
-        # logger.info(f"Blueprint generation time: {image_elapsed:.2f} seconds")
+        logger.info("Step 4: Generating Audio with TTS...")
+        run_tts.main(request_id=request_id, cache_key=cache_key)
+        image_elapsed = time.perf_counter() - blueprint_start_time
+        logger.info(f"Blueprint generation time: {image_elapsed:.2f} seconds")
+
+        logger.info("Step 5: Assembling Final Video...")
+        run_video.main(request_id=request_id, cache_key=cache_key)
+        image_elapsed = time.perf_counter() - blueprint_start_time
+        logger.info(f"Blueprint generation time: {image_elapsed:.2f} seconds")
 
         logger.info(f"==========================================================")
         logger.info(f"PIPELINE COMPLETED SUCCESSFULLY for {request_id}")
