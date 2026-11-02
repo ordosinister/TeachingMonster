@@ -27,4 +27,4 @@ python-pptx
 requests
 uvicorn
 win32com
-pymupdf
+pymupdfpython-docx
