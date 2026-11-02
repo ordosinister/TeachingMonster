@@ -8,7 +8,7 @@ from typing import Literal
 from extraction.powerpoint.parser import parse_pptx
 from extraction.shared.pipeline import create_pipeline
 from extraction.shared.utils import pptx_to_base64_messages
-from extraction.system_prompts.pptx import SYSTEM_PROMPT
+from extraction.system_prompt_warehouse.pptx import SYSTEM_PROMPT
 
 from src.path.path_definition import get_project_dir
 

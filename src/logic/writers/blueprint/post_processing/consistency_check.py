@@ -1,94 +1,15 @@
-"""Consistency check for enterprise training blueprint slides."""
-
 import json
 import logging
 import os
-from textwrap import dedent
+
+from langchain_core.exceptions import OutputParserException
+
+from src.logic.writers.blueprint.post_processing.generation_pipeline import create_audit_pipeline, create_merge_pipeline
+from src.logic.writers.blueprint.structured_output import LessonBlueprint, StudentProfileInterpretation
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("blueprint.consistency")
-
-from langchain_core.exceptions import OutputParserException
-from langchain_core.output_parsers import StrOutputParser, PydanticOutputParser
-
-from model_orchestration import get_model_config
-from src.logic import build_standard_chat_prompt_template
-from src.logic.writers.blueprint.structured_output import LessonBlueprint, StudentProfileInterpretation
-
-CONSISTENCY_SYSTEM_PROMPT = dedent("""\
-# Goal
-Audit enterprise training slides for internal consistency, requirement coverage, and residual cultural assumptions that the background pipeline missed.
-
-# Role
-You are an enterprise training material consistency auditor. You catch contradictions, coverage gaps, and unadapted source-culture assumptions before delivery.
-
-# Inputs
-- <SLIDES>: full image sequence with titles, content, speaker notes, and transitions
-- <COURSE_REQUIREMENT>: the original topic, learning goals, and key points
-- <STUDENT_PERSONA>: target audience description (region, background, role)
-- <BACKGROUND_ADAPTATIONS>: teaching adjustments already identified by the background pipeline
-
-# Rules
-- Flag contradictions: two slides asserting mutually exclusive facts, policies, or definitions.
-- Flag coverage gaps: any key point from COURSE_REQUIREMENT with zero or only implicit coverage.
-- Flag cultural residues: examples, idioms, brand names, regulatory references, or workflow steps that assume the source region context without explanation for the target audience.
-- Do NOT flag background-adapted topics as residue unless they still contain unexplained source-culture assumptions.
-
-# Constraints
-- Never audit mathematical correctness, formula derivation, or scientific facts. Enterprise training has no universal STEM truths.
-- Never propose removing content to fix a gap; propose an additional image or expansion.
-- Cultural residue only when the target audience would be confused, not merely when wording is unfamiliar.
-
-# Output
-# ConsistencyCheck
-
-Slide <N>: Issue -- <one-sentence description>
-...
-
-Coverage Gaps: <comma-separated missing topics, or "None">
-Cultural Residues: <comma-separated unadapted assumptions, or "None">
-Overall Verdict: <Pass / Needs Minor Fixes / Needs Major Rework>
-""")
-
-CONSISTENCY_MERGE_PROMPT = dedent("""\
-# Goal
-Execute every correction identified by the consistency audit, transforming the draft into a structurally sound, requirement-complete, and culturally adapted LessonBlueprint.
-
-# Role
-You are a surgical image content corrector and gap-filler for enterprise training materials. You do not rewrite for style; you fix exactly what the audit flagged, respecting PERSONA\'s perspective.
-
-# Inputs
-- <DRAFT>: current LessonBlueprint JSON
-- <CONSISTENCY_AUDIT>: auditor findings (contradictions, coverage gaps, cultural residues)
-- <COURSE_REQUIREMENT>: the original topic, learning goals, and key points
-- <STUDENT_PERSONA>: target audience description (region, language ability, business/technical background)
-
-# Rules
-## Contradictions
-- Resolve every contradiction by choosing the version that aligns with COURSE_REQUIREMENT.
-- If both conflicting statements contradict COURSE_REQUIREMENT, prioritize the one more consistent with PERSONA\'s business/technical background.
-- Update speaker_notes if the contradiction resolution changes the image\'s meaning.
-
-## Coverage Gaps
-- Every gap listed under "Coverage Gaps" must be closed by adding or expanding slides.
-- New slides must be inserted at the logical dependency position, not appended at the end.
-- Each added image must connect to neighboring slides via valid transition_to_next.
-
-## Cultural Residues
-- Replace or bridge every residue so that PERSONA can understand it without prior source-region knowledge.
-- If a residue is a brand name or local abbreviation, add a brief explanatory clause on first use.
-- If a residue is a case example rooted in source-region culture, rewrite it using PERSONA\'s local business context.
-- Do NOT simply remove the residue; always substitute with an accessible equivalent.
-
-# Constraints
-- Preserve all image fields (title, content, speaker_notes, transition_to_next). Do not drop existing content unless it directly contradicts the audit fix.
-- Do not add learning objectives or key points beyond those in COURSE_REQUIREMENT.
-- If an audit suggestion conflicts with COURSE_REQUIREMENT or PERSONA\'s constraints, prioritize COURSE_REQUIREMENT > PERSONA constraints.
-- Output must be valid JSON matching the LessonBlueprint schema.
-
-# Output
-Format instruction: {format_instructions}
-""")
 
 
 def run_consistency_check(slide_output: LessonBlueprint, course_requirement: str,
@@ -109,6 +30,8 @@ def run_consistency_check(slide_output: LessonBlueprint, course_requirement: str
     """
     logger.info("Running enterprise training consistency check...")
 
+    audit_pipeline = create_audit_pipeline(env)
+
     slide_text = "\n\n".join([
         f"Slide {s.slide_number}: {s.slide_title}\n"
         f"Content: {' | '.join(s.slide_content)}\n"
@@ -116,32 +39,6 @@ def run_consistency_check(slide_output: LessonBlueprint, course_requirement: str
         f"Transition: {s.transition_to_next}"
         for s in slide_output.slides
     ])
-
-    audit_input = {
-        "system": {"template": CONSISTENCY_SYSTEM_PROMPT},
-        "human": {
-            "template": dedent("""\
-                <SLIDES>:
-                {slides}
-
-                <COURSE_REQUIREMENT>:
-                {course_requirement}
-
-                <STUDENT_PERSONA>:
-                {persona}
-
-                <BACKGROUND_ADAPTATIONS>:
-                {adaptations}
-            """),
-            "input_variable": ["slides", "course_requirement", "persona", "adaptations"]
-        }
-    }
-
-    audit_pipeline = (
-        build_standard_chat_prompt_template(audit_input)
-        | get_model_config(env)['master']
-        | StrOutputParser()
-    )
 
     audit_result = audit_pipeline.invoke({
         "slides": slide_text,
@@ -161,31 +58,7 @@ def run_consistency_check(slide_output: LessonBlueprint, course_requirement: str
 
     logger.info("Final merging consistency corrections...")
 
-    output_parser = PydanticOutputParser(pydantic_object=LessonBlueprint)
-    format_instructions = output_parser.get_format_instructions()
-
-    merge_input = {
-        "system": {"template": CONSISTENCY_MERGE_PROMPT,
-                   "partial_variables": {'format_instructions': format_instructions}},
-        "human": {
-            "template": dedent("""\
-                Fix all consistency issues in 
-                
-                <DRAFT>: {draft} 
-                
-                with
-
-                <CONSISTENCY_AUDIT>: {audit}
-
-                <COURSE_REQUIREMENT>: {course_requirement}
-                
-                <STUDENT_PERSONA>: {persona}
-            """)
-        }
-    }
-
-    model_sub = get_model_config(env)['sub']
-    merge_pipeline = build_standard_chat_prompt_template(merge_input) | model_sub | output_parser
+    merge_pipeline = create_merge_pipeline(env)
 
     while True:
         try:

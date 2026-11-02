@@ -15,7 +15,6 @@ def create_presentation_pipeline(model) -> Runnable:
      <COURSE_REQUIREMENT>: {course_requirement}
      <PERSONA>: {student_persona}
      """),
-     input_variables=["course_requirement", "student_persona"]
      )
 
      human_message = HumanMessagePromptTemplate(prompt=human_prompt)

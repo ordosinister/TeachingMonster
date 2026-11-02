@@ -219,8 +219,8 @@ async def process_slide_async(client, slide, image_template_rb, semaphore, env: 
         return (slide['slide_number'], output.image_selection.name if output.image_selection else None)
 
 
-async def process_concurrent(client, script, persona: str,
-                             image_template_rb, output_dir, env: str, max_concurrent=4):
+async def process_concurrent(client, script, image_template_rb, output_dir, env: str,
+                             max_concurrent=4):
 
     semaphore = asyncio.Semaphore(max_concurrent)
     tasks = []
@@ -234,7 +234,7 @@ async def process_concurrent(client, script, persona: str,
         context += f"\n===================================\n-Slide number {slide_number}\n\n-Slide content:\n{slide['slide_content']}"
 
     # Determine visual style based on image prompt + course context
-    source_dir = os.path.dirname(os.path.dirname(output_dir))
+    source_dir = os.path.dirname(output_dir)
 
     input_json_path = os.path.join(source_dir, "input.json")
     with open(input_json_path, "r", encoding="utf-8") as f:
@@ -246,7 +246,7 @@ async def process_concurrent(client, script, persona: str,
         try:
             style_output = await visual_style_pipeline.ainvoke({
                 "course_requirement": input_data["course_requirement"],
-                "student_persona": persona,
+                "student_persona": input_data["persona"],
                 "content": context
             })
             break
@@ -260,7 +260,7 @@ async def process_concurrent(client, script, persona: str,
         output_filename = os.path.join(output_dir, f"slide_{slide_number}_image.png")
 
         slide['context'] = context
-        slide['student_persona'] = persona
+        slide['student_persona'] = input_data["persona"]
 
         if not os.path.isfile(output_filename):
             logger.info(f"{output_filename} does not exist, add to pipeline")
@@ -344,7 +344,7 @@ async def fix_general_images(client, flawed_general_slides, image_template_rb, s
     return [r for r in results if r is not None and not isinstance(r, Exception)]
 
 
-def main(request_id: str, cache_key: str, persona: str):
+def main(request_id: str, cache_key: str):
     """Generate image images for all slides in the adapted blueprint.
 
     Reads blueprint_adapted.json (falls back to blueprint.json), applies
@@ -381,7 +381,7 @@ def main(request_id: str, cache_key: str, persona: str):
 
         max_retries = 3
         retry_count = 0
-        image_types = asyncio.run(process_concurrent(client, script, persona, image_template_rb,
+        image_types = asyncio.run(process_concurrent(client, script, image_template_rb,
                                                      output_dir, env, max_concurrent=4))
 
 if __name__ == "__main__":
@@ -389,7 +389,7 @@ if __name__ == "__main__":
     os.environ['env'] = 'DEV'
 
     main(request_id="01aa1889f2d4c3e75f4c6013db743e09b4edaca190cc45fe98270d81afb08331",
-         cache_key="a97294bb5efc6db3", persona="台灣的新進員工")
+         cache_key="a97294bb5efc6db3")
 
 
 

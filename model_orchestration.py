@@ -69,7 +69,7 @@ def _build_config(env: str) -> dict:
     return {
     "DEV":
         {'main': ChatOllama(model='deepseek-v4-pro:cloud',
-                               name='main', temperature=0),
+                            name='main', temperature=0),
          'context': llama_index_ollama(model='deepseek-v4-pro:cloud', temperature=0, request_timeout=240),
          'sub': ChatOllama(model='gpt-oss:120b-cloud',
                            name='sub', temperature=0),
@@ -81,12 +81,11 @@ def _build_config(env: str) -> dict:
          },
     "PROD":
         {'main':ChatOpenAI(model_name="gpt-5-mini",
-                                openai_api_key=os.environ['OPENAI_API_KEY'],
-                                temperature=0,
-                                name='main'),
+                           openai_api_key=os.environ['OPENAI_API_KEY'],
+                           temperature=0,
+                           name='main'),
          'sub': ChatOllama(model='gpt-oss:120b-cloud',
-                               base_url='https://ollama.com',
-                               name='sub'),
+                           name='sub'),
          'context': llama_index_ollama(model='deepseek-v3.1:671b-cloud', temperature=0, request_timeout=240),
 
          'master':ChatOpenAI(model_name="gpt-5.4-nano-2026-03-17",
@@ -94,9 +93,9 @@ def _build_config(env: str) -> dict:
                              temperature=0,
                              name='master'),
          'image_caption': ChatOpenAI(model_name="gpt-4.1-mini-2025-04-14",
-                             openai_api_key=os.environ['OPENAI_API_KEY'],
-                             temperature=0,
-                             name='image_caption'),
+                                     openai_api_key=os.environ['OPENAI_API_KEY'],
+                                     temperature=0,
+                                     name='image_caption'),
          'image_quality': 'medium'
          }
 

@@ -8,13 +8,13 @@ import os
 import json
 import logging
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Video Generation")
 
 import numpy as np
 from moviepy import ImageClip, AudioFileClip, concatenate_videoclips
 
 from src.path.path_definition import get_project_dir
-from initialization import credential_init
 
 
 def create_silent_clip(duration, fps=24):
@@ -34,7 +34,7 @@ def create_silent_clip(duration, fps=24):
     return clip
 
 
-def main(request_id: str, buffer_seconds: float = 0.5):
+def main(request_id: str, cache_key: str, buffer_seconds: float = 0.5):
     """Assemble image images and audio into a final MP4 video.
 
     Reads blueprint.json for image ordering, pairs each image image
@@ -43,12 +43,12 @@ def main(request_id: str, buffer_seconds: float = 0.5):
 
     Args:
         request_id: Unique request identifier for file path resolution.
+        cache_key
         buffer_seconds: Silent buffer duration between slides (default 0.5s).
     """
-    credential_init()
 
     # Define paths based on your structure
-    base_slide_dir = os.path.join(get_project_dir(), "data", request_id)
+    base_slide_dir = os.path.join(get_project_dir(), "data", request_id, cache_key)
     image_dir = os.path.join(base_slide_dir, "image")
     audio_dir = os.path.join(base_slide_dir, "audio")
     output_dir = os.path.join(base_slide_dir, "video")
@@ -91,10 +91,39 @@ def main(request_id: str, buffer_seconds: float = 0.5):
     print("Concatenating all clips into final video... (this may take a few minutes)")
     final_video = concatenate_videoclips(video_clips, method="chain")
 
+    w, h = final_video.size
+
+    new_w = w - (w % 2)
+    new_h = h - (h % 2)
+
+    final_video = final_video.cropped(
+        x1=0,
+        y1=0,
+        x2=new_w,
+        y2=new_h
+    )
+
+    print(f"Final resolution: {new_w}x{new_h}")
+
     # Write the final file
-    final_video.write_videofile(output_filename, fps=24, codec="libx264", audio_codec="aac",  preset="ultrafast")
+    # final_video.write_videofile(output_filename, fps=24, codec="libx264", audio_codec="aac",  preset="ultrafast")
+    final_video.write_videofile(
+        output_filename,
+        fps=24,
+        codec="libx264",
+        audio_codec="aac",
+        preset="medium",
+        audio_bitrate="192k",
+        ffmpeg_params=[
+            "-pix_fmt", "yuv420p",
+            "-movflags", "+faststart"
+        ],
+        logger="bar"
+    )
 
 if __name__ == "__main__":
-    request_id = "celery_2500_1777682484"
 
-    main(request_id=request_id, buffer_seconds=2)
+    request_id = "01aa1889f2d4c3e75f4c6013db743e09b4edaca190cc45fe98270d81afb08331"
+    cache_key = "a97294bb5efc6db3"
+
+    main(request_id=request_id, cache_key=cache_key)
