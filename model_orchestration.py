@@ -68,29 +68,24 @@ def _build_config(env: str) -> dict:
     """Build a fresh model configuration dict."""
     return {
     "DEV":
-        {'main': ChatOllama(model='deepseek-v3.1:671b-cloud',
-                               base_url='https://ollama.com',
-                               name='main', temperature=0),
-         'context': llama_index_ollama(model='deepseek-v3.1:671b-cloud', temperature=0, request_timeout=240),
+        {'main': ChatOllama(model='deepseek-v4-pro:cloud',
+                            name='main', temperature=0),
+         'context': llama_index_ollama(model='deepseek-v4-pro:cloud', temperature=0, request_timeout=240),
          'sub': ChatOllama(model='gpt-oss:120b-cloud',
-                           base_url='https://ollama.com',
                            name='sub', temperature=0),
-         'master': ChatOllama(model='deepseek-v3.1:671b-cloud',
-                           base_url='https://ollama.com',
+         'master': ChatOllama(model='deepseek-v4-pro:cloud',
                            name='master', temperature=0, reasoning=True),
-         'image_caption': ChatOllama(model='qwen3.5:397b-cloud',
-                           base_url='https://ollama.com',
+         'image_caption': ChatOllama(model='kimi-k2.6:cloud',
                            name='image_caption', temperature=0),
          'image_quality': 'medium'
          },
     "PROD":
         {'main':ChatOpenAI(model_name="gpt-5-mini",
-                                openai_api_key=os.environ['OPENAI_API_KEY'],
-                                temperature=0,
-                                name='main'),
+                           openai_api_key=os.environ['OPENAI_API_KEY'],
+                           temperature=0,
+                           name='main'),
          'sub': ChatOllama(model='gpt-oss:120b-cloud',
-                               base_url='https://ollama.com',
-                               name='sub'),
+                           name='sub'),
          'context': llama_index_ollama(model='deepseek-v3.1:671b-cloud', temperature=0, request_timeout=240),
 
          'master':ChatOpenAI(model_name="gpt-5.4-nano-2026-03-17",
@@ -98,9 +93,9 @@ def _build_config(env: str) -> dict:
                              temperature=0,
                              name='master'),
          'image_caption': ChatOpenAI(model_name="gpt-4.1-mini-2025-04-14",
-                             openai_api_key=os.environ['OPENAI_API_KEY'],
-                             temperature=0,
-                             name='image_caption'),
+                                     openai_api_key=os.environ['OPENAI_API_KEY'],
+                                     temperature=0,
+                                     name='image_caption'),
          'image_quality': 'medium'
          }
 

@@ -13,7 +13,7 @@ import uvicorn
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Request
 from service.storage import CloudStorage
 
-from src.io.path_definition import get_project_dir
+from src.path.path_definition import get_project_dir
 from service.worker import VideoWorker
 
 

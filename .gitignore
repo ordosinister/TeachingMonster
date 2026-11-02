@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Data & credentials
+data/
+config/
+*.env
+.env.local
+
+# Outputs
+logs/
+parsed_pptx/
+*.mp4
+*.mp3
+*.wav
+*.png
+*.jpg
+!layout_template.png
+!presentation/Cover.png

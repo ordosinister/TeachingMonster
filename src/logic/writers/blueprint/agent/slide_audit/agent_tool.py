@@ -1,61 +1,42 @@
-﻿import importlib
+
 import json
 import os
-from textwrap import dedent
 from glob import glob
+from typing import Any
+from textwrap import dedent
 
 from langchain.tools import BaseTool, ToolRuntime
 from langchain_core.runnables import Runnable, RunnableParallel
-from langchain_core.output_parsers import PydanticOutputParser, StrOutputParser
-from pydantic import BaseModel, Field
+from langchain_core.output_parsers import StrOutputParser
 
 from src.logic import build_standard_chat_prompt_template
-from src.logic.writers.blueprint.structured_output import StudentProfileInterpretation, LessonBlueprint
-from src.io.path_definition import get_project_dir
-
-
-class Inputs(BaseModel):
-    request_id: str = Field(description="An ID which has the following structure `celery_[d]{4}_[d]{10}`")
+from src.logic.writers.blueprint.agent.context import AgentContext
+from src.logic.writers.blueprint.agent.slide_audit import prereq_SYSTEM_PROMPT, jargon_SYSTEM_PROMPT
+from src.logic.writers.blueprint.structured_output import LessonBlueprint
+from src.path.path_definition import get_project_dir
 
 
 SLIDE_AUDIT_MERGE_PROMPT = dedent("""\
-# ROLE
-AP Lecturer with extensive slide-based presentation design experience spanning 5th grade through second-year undergraduate. Knows the pain points at every level and holds the highest standard for lecture material. Merge prerequisite gap and jargon overload findings into a single report: de-duplicate, score, and issue a verdict.
+# Goal
+Merge prerequisite gap and jargon overload findings into a single unified report with de-duplication, scoring, and an overall verdict.
 
-# INPUTS
-- PREREQUISITE GAP: per-slide gap descriptions with reasons
-- JARGON OVERLOAD: per-slide list of undefined terms
+# Role
+You are an enterprise training material audit integrator. You combine parallel diagnostic results into a coherent assessment.
 
-# TASK
-Merge both analyses slide by slide. De-duplicate overlapping entries. Assign scores. Output the final report.
+# Inputs
+- <PREREQUISITE_GAP>: per-image gap descriptions with reasons
+- <JARGON_OVERLOAD>: per-image list of undefined or regionally ambiguous terms
 
-# RULES
-- Preserve each gap description and term exactly as received. Never annotate with extra values, formulas, or physical interpretations.
+# Rules
+- Preserve each gap description and term exactly as received. Never annotate with extra values or interpretations.
 - De-duplicate: if the same gap appears in both analyses, list it once under the more detailed description.
 - Missing knowledge_gap coverage = blocking issue -> Needs Major Rework.
 - Scores must cite the rubric tier. Never combine or sum scores.
 
-# CHAIN OF THOUGHT
-1. Walk through slides 1..N.
-2. For each slide: collect gap descriptions and jargon terms.
-3. Merge and de-duplicate. Label each entry Gap or Jargon by its source.
-4. Count slides with gaps for Prerequisite Gap Score; slides with jargon for Jargon Overload Score.
-5. Assign Overall Verdict.
+# Constraints
+- Score assignments must follow the rubric exactly. No interpolation between tiers.
 
-# PREREQUISITE GAP SCORING
-+1: Proactively bridges beyond what Background Knowledge indicates.
-0: All prerequisites adequately covered.
--0.3: Speed bump -- a few gaps, patchable while watching.
--0.6: Stop and fix -- must pause or rewind repeatedly.
--1.0: Roadblock -- core content incomprehensible.
-
-# JARGON OVERLOAD SCORING
-0: Zero slides with undefined terms.
--0.3: 1 slide with undefined terms.
--0.6: 2 slides with undefined terms.
--1.0: 3+ slides with undefined terms.
-
-# OUTPUT FORMAT
+# Output
 # SlideAuditTool
 
 Slide <N>: Gap -- <description>
@@ -68,65 +49,72 @@ Overall Verdict: <Pass / Needs Minor Fixes / Needs Major Rework>
 """)
 
 
-SUMMARIZE_AUDIT_PROMPT = dedent("""Summarize the following audit report in 2-3 sentences. Include the key scores and the most critical issues found. Be concise.
+SUMMARIZE_AUDIT_PROMPT = dedent("""\
+# Goal
+Summarize the audit report in 2-3 sentences, including key scores and the most critical issues.
+
+# Role
+You are a concise report summarizer.
+
+# Inputs
+- <AUDIT_REPORT>: the full image audit text
+
+# Rules
+- Include key scores.
+- Highlight the most critical issues.
+- Be concise.
+
+# Constraints
+- Maximum 3 sentences.
+
+# Output
+A 2-3 sentence summary of the audit.
 """)
 
 class SlideAuditTool(BaseTool):
-    input_parser: PydanticOutputParser = PydanticOutputParser(pydantic_object=Inputs)
-    input_format_instructions: str = input_parser.get_format_instructions()
-
     name: str = "slide_audit_tool"
-    description_template: str = dedent("""\
-    Use this tool to audit slides for prerequisite knowledge gaps and jargon overload issues.
 
-    Runs prerequisite gap analysis and jargon overload detection in parallel, then merges into one report.
+    description: str = dedent("""\
+        Use this tool to audit slides for prerequisite knowledge gaps and jargon overload issues.
 
-    input format instructions: {input_format_instructions}
-    """)
-
-    description: str = description_template.format(input_format_instructions=input_format_instructions)
+        Runs prerequisite gap analysis and jargon overload detection in parallel, then merges into one report.
+        """)
 
     pipeline: Runnable
     summarize_pipeline: Runnable
 
     @classmethod
-    def create(cls, llm: Runnable, subject: str):
-        prereq_module_path = f"src.logic.writers.blueprint.agent.prerequisite_gap.{subject}"
-        prereq_module = importlib.import_module(prereq_module_path)
-
-        jargon_module_path = f"src.logic.writers.blueprint.agent.jargon_overload.{subject}"
-        jargon_module = importlib.import_module(jargon_module_path)
+    def create(cls, llm: Runnable):
 
         prereq_input = {
-            "system": {"template": prereq_module.SYSTEM_PROMPT},
+            "system": {"template": prereq_SYSTEM_PROMPT},
             "human": {
                 "template": dedent("""
-                    TARGET CONTENT: {user_query}
+                    <TARGET_CONTENT>: {user_query}
 
-                    COURSE_REQUIREMENT: {course_requirement}
-
-                    PRIOR_KNOWLEDGE: {prior_knowledge}
-
-                    KNOWLEDGE_GAPS (learning objectives): {knowledge_gaps}
+                    <COURSE_REQUIREMENT>: {course_requirement}
+                    
+                    <KNOWLEDGE_GAPS> (learning objectives): {knowledge_gaps}
+                    
+                    <PERSONA>: {persona}
                 """),
-                "input_variable": ["user_query", "course_requirement", "prior_knowledge", "knowledge_gaps"]
+                "input_variable": ["user_query", "course_requirement", "knowledge_gaps", "persona"]
             }
         }
         prereq_pipeline = build_standard_chat_prompt_template(prereq_input) | llm | StrOutputParser()
 
         jargon_input = {
-            "system": {"template": jargon_module.SYSTEM_PROMPT},
+            "system": {"template": jargon_SYSTEM_PROMPT},
             "human": {
                 "template": dedent("""
-                    TARGET CONTENT: {user_query}
+                    <TARGET_CONTENT>: {user_query}
 
-                    COURSE_REQUIREMENT: {course_requirement}
-
-                    PRIOR_KNOWLEDGE: {prior_knowledge}
-
-                    KNOWLEDGE_GAPS (learning objectives): {knowledge_gaps}
+                    <COURSE_REQUIREMENT>: {course_requirement}
+                    
+                    <PERSONA>: {persona}
+                    
+                    <KNOWLEDGE_GAPS> (learning objectives): {knowledge_gaps}
                 """),
-                "input_variable": ["user_query", "course_requirement", "prior_knowledge", "knowledge_gaps"]
             }
         }
         jargon_pipeline = build_standard_chat_prompt_template(jargon_input) | llm | StrOutputParser()
@@ -140,13 +128,12 @@ class SlideAuditTool(BaseTool):
             "system": {"template": SLIDE_AUDIT_MERGE_PROMPT},
             "human": {
                 "template": dedent("""
-                    PREREQUISITE GAP ANALYSIS:
+                    <PREREQUISITE_GAP>:
                     {prerequisite_gap}
 
-                    JARGON OVERLOAD ANALYSIS:
+                    <JARGON_OVERLOAD>:
                     {jargon_overload}
                 """),
-                "input_variable": ["prerequisite_gap", "jargon_overload"]
             }
         }
         merge_pipeline = build_standard_chat_prompt_template(merge_input) | llm | StrOutputParser()
@@ -155,23 +142,24 @@ class SlideAuditTool(BaseTool):
 
         summarize_input = {
             "system": {"template": SUMMARIZE_AUDIT_PROMPT},
-            "human": {"template": "{report}", "input_variable": ["report"]}
+            "human": {"template": "{report}"}
         }
         summarize_pipeline = build_standard_chat_prompt_template(summarize_input) | llm | StrOutputParser()
 
         return cls(pipeline=slide_audit_pipeline, summarize_pipeline=summarize_pipeline)
 
-    def _run(self, runtime: ToolRuntime[StudentProfileInterpretation], **input):
+    def _run(self, runtime: ToolRuntime[AgentContext, Any], **input):
         print(f"Running {self.name}...")
-        prior_knowledge = "\n".join(runtime.context.prior_knowledge)
         knowledge_gaps = "\n".join(runtime.context.knowledge_gaps)
 
-        args = input.get("input", input)
+        request_id = runtime.context.request_id
+        cache_key = runtime.context.cache_key
+        persona = runtime.context.persona
 
-        request_id = args['request_id']
-        target_dir = os.path.join(get_project_dir(), "data", request_id)
+        input_filename = os.path.join(get_project_dir(), "data", request_id, "input.json")
+        target_dir = os.path.join(get_project_dir(), "data", request_id, cache_key)
 
-        with open(os.path.join(target_dir, "input.json"), "r", encoding="utf-8") as f:
+        with open(input_filename, "r", encoding="utf-8") as f:
             course_requirement = json.load(f)["course_requirement"]
 
         drafts = sorted(glob(f"{os.path.join(target_dir, 'draft')}/*.json"), key=os.path.getmtime)
@@ -184,8 +172,8 @@ class SlideAuditTool(BaseTool):
         result = self.pipeline.invoke({
             "user_query": query,
             "course_requirement": course_requirement,
-            "prior_knowledge": prior_knowledge,
-            "knowledge_gaps": knowledge_gaps
+            "knowledge_gaps": knowledge_gaps,
+            "persona": persona
         })
 
         feedback_dir = os.path.join(target_dir, "slide_audit")
@@ -196,20 +184,23 @@ class SlideAuditTool(BaseTool):
         with open(feedback_filename, "w", encoding="utf-8") as file:
             file.write(result)
 
+        runtime.context.slide_audit = result
+
         summary = self.summarize_pipeline.invoke({"report": result})
         return f"# SlideAuditTool\n{summary}"
 
-    async def _arun(self, runtime: ToolRuntime[StudentProfileInterpretation], **input):
+    async def _arun(self, runtime: ToolRuntime[AgentContext, Any], **input):
         print(f"Running {self.name}...")
-        prior_knowledge = "\n".join(runtime.context.prior_knowledge)
         knowledge_gaps = "\n".join(runtime.context.knowledge_gaps)
 
-        args = input.get("input", input)
+        request_id = runtime.context.request_id
+        cache_key = runtime.context.cache_key
+        persona = runtime.context.persona
 
-        request_id = args['request_id']
-        target_dir = os.path.join(get_project_dir(), "data", request_id)
+        input_filename = os.path.join(get_project_dir(), "data", request_id, "input.json")
+        target_dir = os.path.join(get_project_dir(), "data", request_id, cache_key)
 
-        with open(os.path.join(target_dir, "input.json"), "r", encoding="utf-8") as f:
+        with open(input_filename, "r", encoding="utf-8") as f:
             course_requirement = json.load(f)["course_requirement"]
 
         drafts = sorted(glob(f"{os.path.join(target_dir, 'draft')}/*.json"), key=os.path.getmtime)
@@ -222,10 +213,19 @@ class SlideAuditTool(BaseTool):
         result = await self.pipeline.ainvoke({
             "user_query": query,
             "course_requirement": course_requirement,
-            "prior_knowledge": prior_knowledge,
-            "knowledge_gaps": knowledge_gaps
+            "knowledge_gaps": knowledge_gaps,
+            "persona": persona
         })
+
+        feedback_dir = os.path.join(target_dir, "slide_audit")
+        if not os.path.isdir(feedback_dir):
+            os.makedirs(feedback_dir)
+
+        feedback_filename = os.path.join(feedback_dir, f"version_{len(drafts) - 1}.txt")
+        with open(feedback_filename, "w", encoding="utf-8") as file:
+            file.write(result)
+
+        runtime.context.slide_audit = result
 
         summary = await self.summarize_pipeline.ainvoke({"report": result})
         return f"# SlideAuditTool\n{summary}"
-

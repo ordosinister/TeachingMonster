@@ -1,15 +1,14 @@
 """Blueprint generation: creates structured lesson plans from course requirements.
 
-Uses LLM-based pipelines to generate ordered slide sequences with titles,
+Uses LLM-based pipelines to generate ordered image sequences with titles,
 content, speaker notes, and transitions. Includes subject classification,
 multi-agent feedback loops, and mathematical validation.
 """
 
-import json
+import hashlib
 import logging
 import os
-from typing import Literal
-from textwrap import dedent
+import shutil
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("blueprint")
@@ -20,94 +19,132 @@ from langchain.agents.middleware.tool_call_limit import ToolCallLimitMiddleware
 from langchain_core.exceptions import OutputParserException
 from langchain_core.messages import HumanMessage
 from glob import glob
-from langchain_core.runnables import RunnablePassthrough
-from ollama._types import ResponseError
-
-"""Blueprint generation: creates structured lesson plans from course requirements.
-
-Uses LLM-based pipelines to generate ordered slide sequences with titles,
-content, speaker notes, and transitions. Includes subject classification,
-multi-agent feedback loops, and mathematical validation.
-"""
-
 from model_orchestration import get_model_config
-from src.io.path_definition import get_project_dir
-from src.logic import build_standard_chat_prompt_template
-from src.logic.writers.blueprint.generation_pipeline import (create_presentation_pipeline, create_slide_pipeline,
-                                                             create_background_pipeline, create_adaptability_pipeline,
-                                                             create_student_pipeline)
-from src.logic.writers.blueprint.subject_classifier import classification
-from src.logic.writers.blueprint.agent.finetuning_v2.agent_tool import FineTuningTool
-from src.logic.writers.blueprint.agent.slide_audit.agent_tool import SlideAuditTool
-from src.logic.writers.blueprint.agent.feedback_v2.agent_tool import FeedbackTool
-from src.logic.writers.blueprint.structured_output import LessonBlueprint, AdaptabilityOutput, StudentProfileInterpretation
+from src.logic.writers.blueprint.post_processing.consistency_check import run_consistency_check
+
 from src.logic.writers.blueprint.agent import AGENT_INSTRUCTION
-from src.logic.writers.blueprint.post_processing.math_validation import run_math_validation
+from src.logic.writers.blueprint.agent.context import AgentContext
+from src.logic.writers.blueprint.agent.finetuning.agent_tool import FineTuningTool
+from src.logic.writers.blueprint.agent.slide_audit.agent_tool import SlideAuditTool
+from src.logic.writers.blueprint.agent.feedback.agent_tool import FeedbackTool
+from src.logic.writers.blueprint.generation_pipeline import (create_presentation_pipeline, create_decompress_pipeline,
+                                                             create_background_pipeline)
+from src.logic.writers.blueprint.structured_output import LessonBlueprint, StudentProfileInterpretation
+from src.path.path_definition import get_project_dir
 
-from src.logic.writers.blueprint.post_processing.concept_supervision import run_concept_supervision
+def _get_cache_key(course_requirement: str, persona: str) -> str:
+    """Generate a cache key from (course_requirement, persona).
 
-def main(request_id: str, course_requirement: str, student_persona: str) -> str:
+    One course_requirement may map to multiple persona (e.g. different regions),
+    so the cache key includes both fields.
+    """
+    normalized = f"{course_requirement.strip()}|{persona.strip()}"
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:16]
+
+
+def _copy_from_cache(cache_key: str, target_dir: str) -> bool:
+    """Copy cached blueprint directory to target_dir if cache exists."""
+    cache_dir = os.path.join(get_project_dir(), "data", "cache", "blueprints", cache_key)
+    if not os.path.isdir(cache_dir):
+        return False
+    if os.path.isdir(target_dir):
+        shutil.rmtree(target_dir)
+    shutil.copytree(cache_dir, target_dir)
+    return True
+
+
+def _save_to_cache(cache_key: str, source_dir: str) -> None:
+    """Copy source_dir to cache directory for future reuse."""
+    cache_dir = os.path.join(get_project_dir(), "data", "cache", "blueprints", cache_key)
+    if os.path.isdir(cache_dir):
+        shutil.rmtree(cache_dir)
+    shutil.copytree(source_dir, cache_dir)
+
+
+def main(request_id: str, course_requirement: str, persona: str) -> str:
 
     env = os.environ['env']
 
-    subject = classification(course_requirement, env=env)
+    model_main = get_model_config(env)['main']
+    model_sub = get_model_config(env)['sub']
 
-    logger.info(f"{request_id} subject: {subject}")
+    logger.info(f"{request_id}")
 
-    target_dir = os.path.join(get_project_dir(), "data", request_id)
+    # Check (course_requirement, persona) cache before running pipeline.
+    cache_key = _get_cache_key(course_requirement, persona)
+    logger.info(f"cache_key: {cache_key}")
+
+    target_dir = os.path.join(get_project_dir(), "data", request_id, cache_key)
     if not os.path.isdir(target_dir):
         os.makedirs(target_dir)
 
     output_filename = os.path.join(target_dir, "blueprint.json")
     if os.path.isfile(output_filename):
-        return subject
+        return cache_key
 
-    input_filename = os.path.join(target_dir, "input.json")
-    with open(input_filename, "w", encoding="utf-8") as f:
-        json.dump({"course_requirement": course_requirement, "student_persona": student_persona}, f)
-
-    model_main = get_model_config(env)['main']
-    model_sub = get_model_config(env)['sub']
-
-    background_pipeline = create_background_pipeline(model_main, subject=subject)
-
-    while True:
-        try:
-            pedagogical_state = background_pipeline.invoke({
-                "course_requirement": course_requirement,
-                "student_persona": student_persona
-            })
-            break
-        except OutputParserException:
-            logger.info(f"{request_id} Background Parsing Error")
-
-    logger.info(f"{request_id} pedagogical_state: {pedagogical_state}")
-
-    presentation_pipeline = create_presentation_pipeline(get_model_config(env)['master'], subject=subject)
-
-    logger.info(f"Start drafting {request_id}")
-
-    while True:
-        try:
-            output = presentation_pipeline.invoke({
-                "course_requirement": course_requirement,
-                "student_persona": student_persona,
-                "pedagogical_state": pedagogical_state
-            })
-            break
-        except OutputParserException:
-            logger.info(f"{request_id} Drafting Parsing Error")
+    # Check if a cached blueprint exists for this (course_requirement, persona) pair.
+    with open(os.path.join(target_dir, "input.json"), "w", encoding="utf-8") as f:
+        json.dump({"course_requirement": course_requirement,
+                        "persona": persona}, f)
 
     draft_dir = os.path.join(target_dir, "draft")
     if not os.path.isdir(draft_dir):
         os.makedirs(draft_dir)
 
-    with open(os.path.join(draft_dir, "version_0.json"), "w", encoding="utf-8") as f:
-        f.write(output.model_dump_json(indent=2))
+    draft_v0 = os.path.join(draft_dir, "version_0.json")
+    pedagogical_state_filename = os.path.join(draft_dir, "pedagogical_state.json")
 
-    tools = [SlideAuditTool.create(llm=model_main, subject=subject),
-             FeedbackTool.create(llm=model_main, subject=subject),
-             FineTuningTool.create(llm=model_sub, subject=subject)]
+    if not os.path.isfile(draft_v0):
+
+        background_pipeline = create_background_pipeline(model_main)
+
+        while True:
+            try:
+                pedagogical_state = background_pipeline.invoke({
+                    "course_requirement": course_requirement,
+                    "student_persona": persona
+                })
+
+                with open(pedagogical_state_filename, "w", encoding="utf-8") as f:
+                    f.write(pedagogical_state.model_dump_json(indent=2))
+
+                break
+            except OutputParserException:
+                logger.info(f"{request_id} Background Parsing Error")
+
+        logger.info(f"{request_id} {cache_key} pedagogical_state: {pedagogical_state}")
+
+        presentation_pipeline = create_presentation_pipeline(get_model_config(env)['master'])
+
+        logger.info(f"Start drafting {request_id}/{cache_key}")
+
+        while True:
+            try:
+                output = presentation_pipeline.invoke({
+                    "course_requirement": course_requirement,
+                    "student_persona": persona,
+                    "pedagogical_state": pedagogical_state
+                })
+                break
+            except OutputParserException:
+                logger.info(f"{request_id} Drafting Parsing Error")
+
+        with open(os.path.join(draft_dir, "version_0.json"), "w", encoding="utf-8") as f:
+            f.write(output.model_dump_json(indent=2))
+
+    else:
+        with open(draft_v0, "r", encoding="utf-8") as f:
+            output = LessonBlueprint.model_validate_json(f.read())
+
+        with open(pedagogical_state_filename, "r", encoding="utf-8") as f:
+            pedagogical_state = StudentProfileInterpretation.model_validate_json(f.read())
+
+
+    tools = [
+             SlideAuditTool.create(llm=model_main),
+             FeedbackTool.create(llm=model_main),
+             FineTuningTool.create(llm=model_sub)
+             ]
 
     agent = create_agent(
         model=model_main,
@@ -122,8 +159,20 @@ def main(request_id: str, course_requirement: str, student_persona: str) -> str:
         ]
     )
 
-    agent_input = {"messages": HumanMessage(content=request_id)}
-    agent_result = agent.invoke(agent_input, context=output.student_profile)
+    context = AgentContext(
+        knowledge_gaps=output.student_profile.knowledge_gaps,
+        teaching_adjustments=output.student_profile.teaching_adjustments,
+        request_id=request_id,
+        cache_key=cache_key,
+        feedback=None,
+        slide_audit=None,
+        persona=persona
+    )
+
+    USER_QUERY = "Execute the image audit and refinement pipeline."
+
+    agent_input = {"messages": HumanMessage(content=USER_QUERY)}
+    agent_result = agent.invoke(agent_input, context=context)
 
     print(agent_result['messages'][-1])
 
@@ -131,8 +180,8 @@ def main(request_id: str, course_requirement: str, student_persona: str) -> str:
     with open(drafts_final[-1], "r", encoding="utf-8") as f:
         draft = LessonBlueprint.model_validate_json(f.read())
 
-    slide_pipeline = create_slide_pipeline(model=get_model_config(env)['master'],
-                                           subject=subject, pydantic_object=LessonBlueprint)
+    slide_pipeline = create_decompress_pipeline(model=get_model_config(env)['master'],
+                                                pydantic_object=LessonBlueprint)
 
     while True:
         try:
@@ -140,35 +189,45 @@ def main(request_id: str, course_requirement: str, student_persona: str) -> str:
             slide_output = slide_pipeline.invoke({
                 "draft": draft.model_dump_json(),
                 "course_requirement": course_requirement,
-                "student_persona": student_persona,
+                "student_persona": persona,
                 "pedagogical_state": pedagogical_state
             })
             break
         except Exception as e:
-            print(f"request_id: {request_id}, exception: {e}")
+            print(f"request_id: {request_id}: cache_key: {cache_key}, exception: {e}")
 
-    # --- Math Verification ---
-    slide_output = run_math_validation(slide_output, target_dir, env)
+    # --- Consistency Check ---
+    slide_output = run_consistency_check(
+        slide_output, course_requirement, pedagogical_state, target_dir, env, output_filename
+    )
+    # Cache the completed blueprint for future (course_requirement, persona) reuse.
+    # _save_to_cache(cache_key, target_dir)
 
-    slide_output = run_concept_supervision(slide_output, env, output_filename)
-
-    return subject
+    return cache_key
 
 
 if __name__ == "__main__":
 
-    course_requirement = dedent("""
-          Big Concept: Triangle Centers
-Topic: Comparing Triangle Centers in Different Contexts
-Bloom's Taxonomy: analyze, evaluate
-Learning Goal: Analyze: Compare centroid, incenter, and circumcenter
-Evaluate: Determine the most appropriate center in different scenarios and justify the reasoning
-Key Learning Points: Properties of centroid, incenter, and circumcenter
-Distance relationships (to sides vs vertices)
-Functional differences of triangle centers
-          """)
+    import json
 
-    student_persona = dedent("""
-         Grade: 9th gradeFocus Time: 15 minutesBackground Knowledge: Has: basic definitions of triangle centersLacks: ability to compare and apply concepts in different contexts
-          """)
-    main("abcdefgh", course_requirement, student_persona, env="")
+    from extraction.powerpoint import main as powerpoint_main
+    from src.path.path_definition import get_project_dir
+
+    os.environ['env'] = "DEV"
+
+    request_id = powerpoint_main.run(pptx_path=r"data/Attire for Sales Professionals 241113 updated 3.pptx")
+
+    print(request_id)
+
+    input_dir = os.path.join(get_project_dir(), "data", request_id)
+
+    input_filename = os.path.join(input_dir, "input.json")
+
+    with open(input_filename, "r", encoding="utf-8") as f:
+        course_requirement = json.load(f)
+
+    course_requirement = json.dumps(course_requirement)
+
+    student_persona = "台灣的新進員工"
+
+    main(request_id, course_requirement, student_persona)
