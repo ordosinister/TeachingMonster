@@ -1,11 +1,16 @@
 from textwrap import dedent
 from typing import Literal
 
+from langchain_core.prompts import (
+    ChatPromptTemplate,
+    MessagesPlaceholder,
+    PromptTemplate,
+    SystemMessagePromptTemplate,
+)
 from langchain_core.output_parsers import StrOutputParser
 
 from extractors.powerpoint import SYSTEM_PROMPT
 from model_orchestration import get_model_config
-from src.logic import build_standard_chat_prompt_template
 
 
 def create_pipeline(env: Literal["DEV", "PROD"]):
@@ -14,15 +19,16 @@ def create_pipeline(env: Literal["DEV", "PROD"]):
 
     model = get_model_config(env)[MODEL_NAME]
 
-    input_ = {
-        "system": {"template": SYSTEM_PROMPT},
-        "human": {"template": dedent("""
-                                        <COURSE_REQUIREMENT>: {course_requirement}
-                                        <STUDENT_PERSONA>: {student_persona}
-                                        """),
-                  }
-    }
+    system_prompt = PromptTemplate(
+        template=SYSTEM_PROMPT,
+        input_variables=[]
+    )
 
-    pipeline = build_standard_chat_prompt_template(input_) | model | StrOutputParser()
+    system_message = SystemMessagePromptTemplate(prompt=system_prompt)
+
+    chat_prompt_template = ChatPromptTemplate.from_messages(
+        [system_message, MessagesPlaceholder(variable_name="messages")])
+
+    pipeline = chat_prompt_template | model | StrOutputParser()
 
     return pipeline

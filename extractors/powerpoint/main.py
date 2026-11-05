@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import os
 import shutil
 import time
@@ -9,8 +10,12 @@ from extractors.powerpoint.parser import parse_pptx, pptx_to_base64_messages
 
 from src.path.path_definition import get_project_dir
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("extractirs.powerpoint.main")
 
 def run(pptx_path: str):
+
+    logging.info(f"Processing pptx file: {pptx_path}")
 
     env = os.environ["env"]
 
@@ -28,6 +33,8 @@ def run(pptx_path: str):
 
     hash_result = hashlib.sha256(powerpoint_input.encode("utf-8")).hexdigest()
 
+    logging.info(f"request_id: {hash_result}, Elapsed seconds: {round(time.time() - start_time, 2)}")
+
     input_dir = os.path.join(get_project_dir(), "data", hash_result)
 
     if os.path.isdir(input_dir):
@@ -42,7 +49,7 @@ def run(pptx_path: str):
         {"messages": messages}
     )
 
-    print(f"Elapsed seconds: {round(time.time() - start_time, 2)}")
+    logging.info(f"Elapsed seconds: {round(time.time() - start_time, 2)}")
 
     shutil.rmtree(output_dir)
 

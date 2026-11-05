@@ -107,20 +107,37 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
 
-    if args.request_id and args.requirement and args.persona:
-        main(args.request_id, args.requirement, args.persona)
-    else:
+    import json
 
-        os.environ['env'] = "PROD"
+    from extractors.powerpoint import main as powerpoint_main
+    from extractors.pdf import main as pdf_main
 
-        req_id = "celery_0000_0000000010"
-        # req_id = "celery_3499_1778645677"
+    from src.path.path_definition import get_project_dir
 
-        logger.info("Running in test mode with default values...")
-        input_path = Path(f"data/{req_id}/input.json")
-        with open(input_path, "r", encoding="utf-8") as f:
-            input_data = json.load(f)
-        course_req = input_data["course_requirement"]
-        persona = input_data["student_persona"]
+    os.environ['env'] = "DEV"
 
-        main(req_id, course_req, persona)
+    filename = r"data/Our Shared Core Values and Code of Conduct_ITG_150122.pdf"
+
+    # student_persona = "台灣的被動電子元件/電感製造商的越南地區新進業務(Sales)，需要拜訪下游製造商來完成業務。使用越南文"
+    student_persona = "台灣的被動電子元件/電感製造商的新進員工"
+
+    if filename.endswith("pptx"):
+
+        request_id = powerpoint_main.run(pptx_path=filename)
+
+    elif filename.endswith("pdf"):
+
+        request_id = pdf_main.run(pdf_path=filename)
+
+    print(request_id)
+
+    input_dir = os.path.join(get_project_dir(), "data", request_id)
+
+    input_filename = os.path.join(input_dir, "input.json")
+
+    with open(input_filename, "r", encoding="utf-8") as f:
+        course_requirement = json.load(f)
+
+    course_requirement = json.dumps(course_requirement)
+
+    main(request_id, course_requirement, student_persona)

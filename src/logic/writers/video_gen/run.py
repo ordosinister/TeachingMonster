@@ -66,6 +66,9 @@ def main(request_id: str, cache_key: str, buffer_seconds: float = 0.5):
 
     video_clips = []
 
+    from PIL import Image, ImageOps
+    import numpy as np
+
     print("Processing assets and generating clips...")
     for item in script_data['slides']:
         slide_num = item.get('slide_number')
@@ -76,9 +79,9 @@ def main(request_id: str, cache_key: str, buffer_seconds: float = 0.5):
         aud_path = os.path.join(audio_dir, f"slide_{slide_num}_audio.mp3")
 
         if os.path.exists(img_path) and os.path.exists(aud_path):
-            print(f"Adding Slide {slide_num}...")
+            logging.info(f"Adding Slide {slide_num}...")
 
-            # 1. Load audio and get its duration
+            # 1. Load audio
             audio_clip = AudioFileClip(aud_path)
             total_duration = audio_clip.duration + buffer_seconds
 
@@ -88,22 +91,20 @@ def main(request_id: str, cache_key: str, buffer_seconds: float = 0.5):
 
             video_clips.append(img_clip)
 
-    print("Concatenating all clips into final video... (this may take a few minutes)")
+    ####
+
+    # video_clips[8].write_videofile(
+    #     "debug_single.mp4",
+    #     fps=24,
+    #     codec="libx264",
+    #     audio_codec="aac",
+    #     ffmpeg_params=["-pix_fmt", "yuv420p"]
+    # )
+
+    ####
+
+    logging.info("Concatenating all clips into final video... (this may take a few minutes)")
     final_video = concatenate_videoclips(video_clips, method="chain")
-
-    w, h = final_video.size
-
-    new_w = w - (w % 2)
-    new_h = h - (h % 2)
-
-    final_video = final_video.cropped(
-        x1=0,
-        y1=0,
-        x2=new_w,
-        y2=new_h
-    )
-
-    print(f"Final resolution: {new_w}x{new_h}")
 
     # Write the final file
     # final_video.write_videofile(output_filename, fps=24, codec="libx264", audio_codec="aac",  preset="ultrafast")
@@ -112,13 +113,13 @@ def main(request_id: str, cache_key: str, buffer_seconds: float = 0.5):
         fps=24,
         codec="libx264",
         audio_codec="aac",
-        preset="medium",
-        audio_bitrate="192k",
+        # preset="ultrafast",
+        # audio_bitrate="192k",
         ffmpeg_params=[
             "-pix_fmt", "yuv420p",
-            "-movflags", "+faststart"
+            # "-movflags", "+faststart"
         ],
-        logger="bar"
+        # logger="bar"
     )
 
 if __name__ == "__main__":

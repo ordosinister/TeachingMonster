@@ -46,6 +46,7 @@ async def openai_call(client, prompt: str, image: List, image_temp: Optional[str
                         image=image,
                         prompt=prompt,
                         quality=get_model_config(env)['image_quality'],
+                        size="1792x1008",
                     )
                     break
                 except APIConnectionError:
@@ -63,6 +64,7 @@ async def openai_call(client, prompt: str, image: List, image_temp: Optional[str
                     image=image,
                     prompt=prompt,
                     quality=get_model_config(env)['image_quality'],
+                    size="1792x1008"
                 )
                 break
             except APIConnectionError:

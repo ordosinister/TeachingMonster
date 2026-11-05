@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import os
 import shutil
 import time
@@ -9,8 +10,12 @@ from extractors.word.parser import parse_docx, docx_to_base64_messages
 
 from src.path.path_definition import get_project_dir
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("extractirs.word.main")
 
 def run(docx_path: str):
+
+    logging.info(f"Processing docx file: {docx_path}")
 
     env = os.environ["env"]
 
@@ -28,6 +33,8 @@ def run(docx_path: str):
 
     hash_result = hashlib.sha256(word_input.encode("utf-8")).hexdigest()
 
+    logging.info(f"request_id: {hash_result}, Elapsed seconds: {round(time.time() - start_time, 2)}")
+
     input_dir = os.path.join(get_project_dir(), "data", hash_result)
 
     if os.path.isdir(input_dir):
@@ -42,7 +49,7 @@ def run(docx_path: str):
         {"messages": messages}
     )
 
-    print(f"Elapsed seconds: {round(time.time() - start_time, 2)}")
+    logging.info(f"Elapsed seconds: {round(time.time() - start_time, 2)}")
 
     shutil.rmtree(output_dir)
 
@@ -62,6 +69,6 @@ if __name__ == "__main__":
 
     os.environ["env"] = "DEV"
 
-    request_id= run(docx_path=r"data/sample.docx")
+    request_id= run(docx_path=r"data/勞工道德管理培訓教材.docx")
 
     print(request_id)

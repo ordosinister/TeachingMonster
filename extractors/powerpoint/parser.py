@@ -1,64 +1,15 @@
 # python -m pip install pywin32
 import json
 import os
-import tempfile
 import uuid
 from pathlib import Path
 
-import win32com.client
 from langchain_core.messages import HumanMessage
 from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE
 
 from extractors.shared.utils import image_to_base64
 from src.path.path_definition import get_project_dir
-
-
-# def pptx_to_pdf(pptx_path: str) -> bytes:
-#
-#     output_dir = os.path.join(get_project_dir(), "data", str(uuid.uuid4()))
-#
-#     pptx = Path(pptx_path).resolve()
-#     out_dir = Path(output_dir).resolve()
-#     out_dir.mkdir(parents=True, exist_ok=True)
-#
-#     if not pptx.is_file():
-#         raise FileNotFoundError(f"找不到 PPTX：{pptx}")
-#
-#     # pdf_path = out_dir / f"{pptx.stem}.pdf"
-#     powerpoint = None
-#     presentation = None
-#
-#     try:
-#         with tempfile.TemporaryDirectory() as temp_dir:
-#             pdf_path = Path(temp_dir) / "temp.pdf"
-#
-#             powerpoint = win32com.client.DispatchEx(
-#                 "PowerPoint.Application"
-#             )
-#             # powerpoint.Visible = 0
-#
-#             presentation = powerpoint.Presentations.Open(
-#                 str(pptx),
-#                 ReadOnly=True,
-#                 Untitled=False,
-#                 WithWindow=False,
-#             )
-#
-#             # 2 = ppFixedFormatTypePDF
-#             presentation.SaveAs(str(pdf_path), 32)
-#
-#             if not pdf_path.is_file():
-#                 raise RuntimeError("PowerPoint 未產生 PDF 檔案")
-#
-#             # return pdf_path
-#             return pdf_path.read_bytes()
-#     finally:
-#         if presentation is not None:
-#             presentation.Close()
-#
-#         if powerpoint is not None:
-#             powerpoint.Quit()
 
 
 def parse_pptx(pptx_path):

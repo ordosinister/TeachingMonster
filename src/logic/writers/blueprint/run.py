@@ -6,6 +6,7 @@ multi-agent feedback loops, and mathematical validation.
 """
 
 import hashlib
+import json
 import logging
 import os
 import shutil
@@ -27,7 +28,7 @@ from src.logic.writers.blueprint.agent.context import AgentContext
 from src.logic.writers.blueprint.agent.finetuning.agent_tool import FineTuningTool
 from src.logic.writers.blueprint.agent.slide_audit.agent_tool import SlideAuditTool
 from src.logic.writers.blueprint.agent.feedback.agent_tool import FeedbackTool
-from src.logic.writers.blueprint.generation_pipeline import (create_presentation_pipeline, create_decompress_pipeline,
+from src.logic.writers.blueprint.generation_pipeline import (create_presentation_pipeline, create_decompression_pipeline,
                                                              create_background_pipeline)
 from src.logic.writers.blueprint.structured_output import LessonBlueprint, StudentProfileInterpretation
 from src.path.path_definition import get_project_dir
@@ -85,7 +86,7 @@ def main(request_id: str, course_requirement: str, persona: str) -> str:
     # Check if a cached blueprint exists for this (course_requirement, persona) pair.
     with open(os.path.join(target_dir, "input.json"), "w", encoding="utf-8") as f:
         json.dump({"course_requirement": course_requirement,
-                        "persona": persona}, f)
+                        "persona": persona}, f, ensure_ascii=False)
 
     draft_dir = os.path.join(target_dir, "draft")
     if not os.path.isdir(draft_dir):
@@ -180,7 +181,7 @@ def main(request_id: str, course_requirement: str, persona: str) -> str:
     with open(drafts_final[-1], "r", encoding="utf-8") as f:
         draft = LessonBlueprint.model_validate_json(f.read())
 
-    slide_pipeline = create_decompress_pipeline(model=get_model_config(env)['master'],
+    slide_pipeline = create_decompression_pipeline(model=get_model_config(env)['master'],
                                                 pydantic_object=LessonBlueprint)
 
     while True:
