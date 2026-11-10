@@ -1,21 +1,23 @@
 import asyncio
-import json
+import io
 import logging
 import os
 from textwrap import dedent
 from typing import List
 
+import pymupdf
+import whisper
 from langchain_core.messages import HumanMessage
 from mutagen.mp3 import MP3
 from openai import AsyncOpenAI
+from PIL import Image
 
 from initialization import credential_init
 from model_orchestration import get_model_config
+from src.path.path_definition import get_project_dir
 from src.sop.audio.generation_pipeline import create_pipeline
+from src.sop.audio.correction_pipeline import create_pipeline as create_correction_pipeline
 from src.sop.audio.structured_output import TTSScript, TTSScripts
-import io
-import pymupdf
-from PIL import Image
 
 
 logging.basicConfig(level=logging.INFO)
@@ -111,13 +113,23 @@ def _pdf_pages_to_images(pdf_filename: str, output_dir: str, dpi: int = 200):
 def main(messages: List[HumanMessage], source_dir: str, persona: str, pdf_filename: str = ""):
 
     instruction = dedent("""
-    Speak like a clear, confident corporate training facilitator delivering an internal enterprise course.
-    Maintain a warm yet professional tone—approachable and authoritative without being stiff or overly casual.
-    Pace is measured and natural: slightly deliberate for new concepts, brisk and efficient for review or procedural steps.
-    Use natural prosody with gentle emphasis on key terms, clear pauses between ideas, and a calm, reassuring cadence.
-    Convey quiet enthusiasm that signals expertise and engagement, but never force cheerfulness.
-    Articulate domain terminology crisply; avoid idioms, slang, or culture-specific references.
-    Sound like a credible colleague guiding adult professionals through operational material.
+    **Voice Affect:** Clear, warm, confident, and approachable. Speak with the natural voice of an experienced Taiwanese corporate training instructor. Maintain a pleasant, reassuring, and professional vocal presence. Use natural variations in pitch and tone to keep the narration engaging without sounding overly animated or theatrical.
+
+**Tone:** Warm, professional, informative, and supportive. Sound like a senior training instructor guiding Taiwanese professionals through structured learning material. Maintain a balance between expertise and approachability. Convey genuine enthusiasm for the subject while avoiding exaggerated excitement, excessive formality, or an artificial presentation style.
+
+**Pacing:** Measured, smooth, and natural. Speak at a comfortable pace that allows Taiwanese Mandarin listeners to follow and understand the material easily. Slow down slightly when introducing new concepts, explaining technical terminology, or discussing important details. Use a moderately brisk pace when reviewing familiar information, explaining procedures, or transitioning between topics. Avoid speaking too quickly or compressing syllables.
+
+**Emotion:** Calm, confident, patient, and encouraging. Convey the experience and reliability of a knowledgeable training instructor. Maintain a positive and supportive attitude that helps learners feel comfortable, engaged, and confident in understanding the material. Avoid exaggerated emotional expressions or forced enthusiasm.
+
+**Personality:** Friendly, articulate, knowledgeable, and trustworthy. Sound like an experienced Taiwanese corporate educator who explains complex topics in a clear and accessible manner. Be approachable without becoming overly casual. Communicate with the natural confidence of a professional colleague guiding adult learners through workplace training. Avoid sounding robotic, excessively scripted, or like a formal news broadcaster.
+
+**Pauses:** Use natural and purposeful pauses between sentences, key concepts, instructional steps, and major sections. Allow slightly longer pauses after important explanations, unfamiliar terminology, or complex information so learners have sufficient time to process what they hear. Use shorter pauses during continuous explanations to maintain a smooth and coherent flow. Avoid unnecessary dramatic pauses.
+
+**Accent:** Speak fluent, standard Taiwan Mandarin (Taiwanese Mandarin) with a natural and neutral Taiwanese accent. Use authentic Taiwanese Mandarin speech characteristics throughout the narration. Avoid Beijing-style pronunciation, exaggerated retroflexion, or strongly regional mainland Chinese accents. Maintain a consistent Taiwanese Mandarin accent from beginning to end.
+
+**Pronunciation:** Follow standard Taiwanese Mandarin pronunciation and articulation. Use natural Taiwanese Mandarin vowel and consonant sounds, with relatively light retroflexion characteristic of standard Taiwan Mandarin. Maintain accurate Mandarin tones, clear syllable articulation, and natural sentence-level intonation. Pronounce technical terminology, English loanwords, abbreviations, and professional vocabulary clearly and consistently. Avoid unnatural pronunciation, excessive emphasis, or exaggerated enunciation.
+
+**Vocabulary:** Use Traditional Chinese (Taiwan) vocabulary, expressions, and linguistic conventions. Prefer terminology commonly used in Taiwanese workplaces, corporate training materials, and professional communication. Use natural Taiwanese expressions rather than Mainland Chinese vocabulary or regional expressions. Maintain consistent terminology throughout the narration. Avoid slang, internet expressions, colloquialisms, and overly literary language. When explaining technical concepts, prioritize clarity, precision, and accessibility for Taiwanese adult learners.
     """)
 
     # Extract PDF pages to images if a PDF file is provided
@@ -147,3 +159,46 @@ def main(messages: List[HumanMessage], source_dir: str, persona: str, pdf_filena
     logger.info("Generating %d audio tracks in %s", len(scripts.scripts), output_dir)
     asyncio.run(process_concurrent(client, scripts.scripts, output_dir, instruction, max_concurrent=4))
     logger.info("TTS generation complete")
+
+    # --- SST + Correction + Subtitle Generation ---
+    logger.info("Starting STT + correction process")
+
+    download_root = os.path.join(get_project_dir(), "whisper")
+    kwargs = {"word_timestamps": True, "language": "zh"}
+    whisper_model = whisper.load_model("small", device="cpu", download_root=download_root)
+
+    # Build correction pipeline
+    correction_model = get_model_config(os.environ["env"]).get("main")
+    correction_pipeline = create_correction_pipeline(correction_model)
+
+    from src.sop.audio.structured_output import CorrectedSubtitles
+
+    for slide_number, script in enumerate(scripts.scripts, start=1):
+        speech_file_path = os.path.join(output_dir, f"slide_{slide_number}_audio.mp3")
+        logger.info("Transcribing slide %d: %s", slide_number, speech_file_path)
+
+        result = whisper_model.transcribe(speech_file_path, **kwargs)
+
+        # Build STT segments string for LLM prompt
+        stt_segments_lines = []
+        for idx2, seg in enumerate(result["segments"], start=1):
+            stt_segments_lines.append(
+                f"Segment {idx2}: start={seg['start']:.2f}s end={seg['end']:.2f}s text=\"{seg['text'].strip()}\""
+            )
+        stt_segments_str = "\n".join(stt_segments_lines)
+
+        ground_truth = script.script
+
+        logger.info("Running correction for slide %d", slide_number)
+        corrected = correction_pipeline.invoke({
+            "ground_truth": ground_truth,
+            "stt_segments": stt_segments_str,
+        })
+
+        # Save corrected subtitles
+        subtitle_path = os.path.join(source_dir, f"slide_{slide_number}_subtitles.json")
+        with open(subtitle_path, "w", encoding="utf-8") as f:
+            f.write(corrected.model_dump_json(indent=2))
+        logger.info("Slide %d corrected: %d segments saved to %s", slide_number, len(corrected.segments), subtitle_path)
+
+    logger.info("STT + correction complete for all slides")
