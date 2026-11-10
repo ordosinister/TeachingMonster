@@ -18,7 +18,7 @@
 
 ## Entry Points 職責分界
 
-本專案有兩個執行入口，職責明確區分：
+本專案有三個執行入口，對應不同 pipeline：
 
 ### 1. service/api.py — FastAPI Web Service（對外服務）
 
@@ -30,20 +30,49 @@
   - POST /v1/files/{request_id}/video — 取得已生成影片的 S3 URL
   - POST /test — 連線測試（300s sleep，用於 ngrok 驗證）
 - **處理方式**：透過 VideoWorker 非同步處理請求，回傳 presigned S3 URL
+- **實際呼叫**：`service/worker.py` → `src.pipeline.run.run_pipeline()`（HTML slide pipeline，含 blueprint + layout + image + audio + render）
 - **適用情境**：外部系統呼叫、定時任務觸發、ngrok 公開服務
 
-### 2. 
-un.py — CLI Pipeline（手動執行）
+### 2. src/pipeline/run.py — HTML Slide Pipeline（主要 production pipeline）
 
-- **角色**：本地開發調試與手動批次執行的管線編排器
-- **啟動方式**：python run.py --request_id <id> --requirement <text> --persona <text>
-- **執行流程**：依序呼叫五階段 writers（Blueprint → Adaptation → Slide → TTS → Video）
-- **輸出**：logs/pipeline.log + 終端輸出
-- **適用情境**：本地開發測試、單次手動生成、排查 pipeline 問題
-- **預設行為**：未給參數時以 data/celery_0000_0000000010/input.json 跑測試模式
+- **角色**：現行 production pipeline，生成 HTML 投影片 + AI 圖像 + TTS 音訊 + Playwright 渲染
+- **啟動方式**：
+  ```python
+  from src.pipeline.run import run_pipeline
+  await run_pipeline(user_input="...", request_id="...", persona="...", env="DEV")
+  ```
+- **執行流程**：
+  1. `src.blueprint.run` — 可靠 blueprint 內容生成
+  2. `src.pipeline.image_generator.visual_style` — 統一視覺風格
+  3. `src.pipeline.slide_layout` — 兩階段排版（image prompt → HTML layout）
+  4. `src.pipeline.validator` — HTML 驗證
+  5. `src.pipeline.image_generator` — 圖像生成
+  6. `src.pipeline.audio_generator` — TTS 音訊生成
+  7. `src.pipeline.html_embedder` + `src.pipeline.renderer` — HTML embed + Playwright 錄製
+- **輸出**：`data/{request_id}/{cache_key}/final_video_path`
+- **適用情境**：production 影片生成、service/api.py 後端呼叫
 
-**注意**：
-un.py 的 main() 函式由 service/worker.py 內的 VideoWorker.process_request() 呼叫；兩個入口共享同一套 pipeline 邏輯，只差在觸發方式（HTTP API vs CLI）。
+### 3. src/sop/run.py — SOP Document Reader Pipeline（PDF → 圖 + 音 + 影片）
+
+- **角色**：讀取 PDF 文件，每頁轉圖 + 語音旁白 → 合成影片
+- **啟動方式**：`python -m src.sop.run`
+- **執行流程**：
+  1. `src.sop.extractors.pdf` — PDF 頁面提取 + OCR
+  2. `src.sop.audio.run` — 每頁生成 TTS 語音旁白（同時執行 PDF → PNG 圖片轉換）
+  3. `src.sop.video_gen.run` — 圖片與音訊合成 MP4
+- **適用情境**：既有文件轉教學影片、SOP 文件語音化
+
+### 4. legacy/v1/run.py — 舊版 CLI Pipeline（已封存）
+
+- **角色**：第一版 pipeline，直接生成靜態圖片 + moviepy 合成（無 HTML 投影片架構）
+- **啟動方式**：`python legacy/v1/run.py`
+- **執行流程**：Blueprint → Adaptation → Image → TTS → Video（moviepy）
+- **狀態**：已封存，僅供參考與問題排查
+
+### 5. poc/run_concept.py — 概念驗證腳本
+
+- **角色**：早期概念驗證，使用簡化 `poc.slide_content` 生成器（非 `src.blueprint`）
+- **適用情境**：快速測試 slide layout / image generation 邏輯，不經過完整 blueprint
 
 ## Encoding Pitfalls (Windows / PowerShell)
 
