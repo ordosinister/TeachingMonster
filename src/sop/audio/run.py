@@ -13,6 +13,9 @@ from initialization import credential_init
 from model_orchestration import get_model_config
 from src.sop.audio.generation_pipeline import create_pipeline
 from src.sop.audio.structured_output import TTSScript, TTSScripts
+import io
+import pymupdf
+from PIL import Image
 
 
 logging.basicConfig(level=logging.INFO)
@@ -82,7 +85,30 @@ async def process_concurrent(client, scripts: List[TTSScript], output_dir: str, 
     await asyncio.gather(*tasks)
 
 
-def main(messages: List[HumanMessage], source_dir: str, persona: str):
+
+def _pdf_pages_to_images(pdf_filename: str, output_dir: str, dpi: int = 200):
+    """Convert each PDF page to an even-dimensioned PNG."""
+    pdf_doc = pymupdf.open(pdf_filename)
+    os.makedirs(output_dir, exist_ok=True)
+
+    for page_number, page in enumerate(pdf_doc, start=1):
+        pixmap = page.get_pixmap(dpi=dpi)
+        image_bytes = pixmap.tobytes("jpeg")
+        image = Image.open(io.BytesIO(image_bytes))
+
+        width, height = image.size
+        new_width = width - (width % 2)
+        new_height = height - (height % 2)
+
+        if (width, height) != (new_width, new_height):
+            image = image.crop((0, 0, new_width, new_height))
+
+        filepath = os.path.join(output_dir, f"slide_{page_number}_image.png")
+        image.save(filepath, format="PNG")
+        logger.info("Saved page %d as %s", page_number, filepath)
+
+
+def main(messages: List[HumanMessage], source_dir: str, persona: str, pdf_filename: str = ""):
 
     instruction = dedent("""
     Speak like a clear, confident corporate training facilitator delivering an internal enterprise course.
@@ -93,6 +119,11 @@ def main(messages: List[HumanMessage], source_dir: str, persona: str):
     Articulate domain terminology crisply; avoid idioms, slang, or culture-specific references.
     Sound like a credible colleague guiding adult professionals through operational material.
     """)
+
+    # Extract PDF pages to images if a PDF file is provided
+    if pdf_filename and os.path.isfile(pdf_filename):
+        image_dir = os.path.join(source_dir, "image")
+        _pdf_pages_to_images(pdf_filename, image_dir)
 
     filename = os.path.join(source_dir, "blueprint.json")
 
