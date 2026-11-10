@@ -237,6 +237,7 @@ async def run_pipeline(
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(output_data, f, ensure_ascii=False, indent=2)
     logger.info("Results saved to %s", output_path)
+    return final_video_path
 
     return output_data
 

@@ -1,14 +1,13 @@
 """Background worker that executes the video generation pipeline.
 
-Wraps the synchronous pipeline in asyncio.to_thread() to avoid
-blocking the FastAPI event loop.
+Calls the async pipeline directly from the FastAPI background task.
 """
 
 import os
 import asyncio
 
 from service.storage import CloudStorage
-from run import main as run_pipeline
+from src.pipeline.run import run_pipeline
 
 from src.path.path_definition import get_project_dir
 
@@ -41,17 +40,16 @@ class VideoWorker:
         self.jobs[req_id] = {"status": "processing", "url": None}
         
         try:
-            # Run the pipeline in a separate thread to avoid blocking the event loop
-            # since run_pipeline is a synchronous function
-            await asyncio.to_thread(
-                run_pipeline, 
-                request_id=req_id, 
-                course_requirement=request.course_requirement, 
-                student_persona=request.student_persona,
+            # Run the async pipeline directly (worker is already in async context)
+            final_video_path = await run_pipeline(
+                user_input=request.course_requirement,
+                request_id=req_id,
+                persona=request.student_persona,
+                env=self.env,
             )
             
-            # Find the resulting file
-            local_path = self.get_local_video_path(req_id)
+            # Use the returned video path
+            local_path = final_video_path if final_video_path else self.get_local_video_path(req_id)
             if os.path.exists(local_path):
                 video_url = self.storage.upload_file(local_path)
                 self.jobs[req_id] = {"status": "completed", "url": video_url}
