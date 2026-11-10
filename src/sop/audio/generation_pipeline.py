@@ -3,7 +3,11 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, Prom
 from langchain_core.runnables import Runnable
 
 from src.sop.audio import SYSTEM_PROMPT
+import logging
+
 from src.sop.audio.structured_output import TTSScripts
+
+logger = logging.getLogger(__name__)
 
 
 def create_pipeline(model) -> Runnable:
@@ -25,5 +29,6 @@ def create_pipeline(model) -> Runnable:
          MessagesPlaceholder(variable_name="messages")])
 
     pipeline = chat_prompt_template | model | output_parser
+    logger.info("TTS pipeline created")
 
     return pipeline

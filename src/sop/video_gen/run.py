@@ -33,6 +33,7 @@ def main(source_dir, buffer_seconds: float = 0.5):
         os.makedirs(output_dir)
 
     output_filename = os.path.join(output_dir, f"final_presentation_{Path(output_dir).stem}.mp4")
+    logger.info("Output video: %s", output_filename)
 
     video_clips = []
 
@@ -69,6 +70,7 @@ def main(source_dir, buffer_seconds: float = 0.5):
             "-pix_fmt", "yuv420p",
         ],
     )
+    logger.info("Video saved: %s", output_filename)
 
 if __name__ == "__main__":
 

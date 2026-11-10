@@ -125,6 +125,7 @@ def main(messages: List[HumanMessage], source_dir: str, persona: str, pdf_filena
         image_dir = os.path.join(source_dir, "image")
         _pdf_pages_to_images(pdf_filename, image_dir)
 
+    logger.info("TTS generation started: source_dir=%s persona=%s", source_dir, persona)
     filename = os.path.join(source_dir, "blueprint.json")
 
     if not os.path.isfile(filename):
@@ -143,4 +144,6 @@ def main(messages: List[HumanMessage], source_dir: str, persona: str, pdf_filena
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
 
+    logger.info("Generating %d audio tracks in %s", len(scripts.scripts), output_dir)
     asyncio.run(process_concurrent(client, scripts.scripts, output_dir, instruction, max_concurrent=4))
+    logger.info("TTS generation complete")
