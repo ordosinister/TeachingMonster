@@ -1,0 +1,302 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeachingMonster Slide Preview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", "Microsoft JhengHei", "PingFang TC", sans-serif;
+    background: #1a1a2e;
+    color: #eee;
+    padding: 20px;
+    min-height: 100vh;
+  }
+  h1 { text-align: center; margin-bottom: 10px; font-size: 1.4rem; color: #e0e0ff; }
+  .controls {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .controls button {
+    background: #4a4a8a;
+    border: none;
+    color: #fff;
+    padding: 8px 18px;
+    margin: 0 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+  }
+  .controls button:hover { background: #6a6aaa; }
+  .controls .hint {
+    display: inline-block;
+    margin-left: 12px;
+    color: #aaa;
+    font-size: 0.85rem;
+  }
+
+  /* Slide container: 16:9 */
+  .slide-stage {
+    max-width: 1100px;
+    margin: 0 auto 28px auto;
+    aspect-ratio: 16 / 9;
+    background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+    border-radius: 12px;
+    border: 2px solid #4a4a8a;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+  .slide-header {
+    padding: 14px 24px 6px 24px;
+    font-size: 0.85rem;
+    color: #aab6fe;
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .slide-body {
+    flex: 1;
+    display: flex;
+    padding: 18px 24px;
+    gap: 20px;
+  }
+  .slide-text {
+    flex: 1.1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .slide-text h2 {
+    font-size: 1.6rem;
+    color: #ffd700;
+    margin-bottom: 18px;
+    line-height: 1.3;
+  }
+  .slide-text ul {
+    list-style: none;
+    padding: 0;
+  }
+  .slide-text li {
+    font-size: 1.15rem;
+    line-height: 1.7;
+    margin-bottom: 10px;
+    padding-left: 22px;
+    position: relative;
+  }
+  .slide-text li::before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    color: #00d2ff;
+    font-weight: bold;
+  }
+
+  /* Image slot */
+  .slide-image-slot {
+    flex: 0.9;
+    background: rgba(0,0,0,0.25);
+    border: 2px dashed rgba(255,255,255,0.25);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .slide-image-slot img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+  .slide-image-slot .placeholder {
+    color: rgba(255,255,255,0.35);
+    font-size: 0.95rem;
+    text-align: center;
+    padding: 20px;
+  }
+  .slide-image-slot .placeholder .icon {
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .ratio-label {
+    position: absolute;
+    bottom: 8px;
+    right: 10px;
+    background: rgba(0,0,0,0.55);
+    color: #ffd700;
+    font-size: 0.78rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .slide-notes {
+    background: rgba(0,0,0,0.3);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 10px 24px;
+    font-size: 0.9rem;
+    color: #ccc;
+    line-height: 1.5;
+  }
+  .slide-notes strong {
+    color: #aab6fe;
+  }
+
+  /* Responsive */
+  @media (max-width: 860px) {
+    .slide-body { flex-direction: column; }
+    .slide-image-slot { min-height: 180px; }
+    .slide-text h2 { font-size: 1.25rem; }
+    .slide-text li { font-size: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<h1>TeachingMonster Slide Preview</h1>
+
+<div class="controls">
+  <button onclick="prevSlide()">◀ 上一頁</button>
+  <button onclick="nextSlide()">下一頁 ▶</button>
+  <button onclick="toggleAll()">展開全部</button>
+  <span class="hint">Slide <span id="page-num">1</span> / <span id="total-num">0</span>　|　投影片比例 16:9</span>
+</div>
+
+<div id="slides-container"></div>
+
+<script>
+  // ================================================================
+  // 1. Load data
+  // ================================================================
+  // Default demo data (4 slides). Replace with your pipeline output JSON.
+  const defaultData = {
+    slides: [
+      {
+        slide_image: "Placeholder",
+        slide_content: [
+          "第一頁：引入主題與學習目標",
+          "說明課程核心價值與預期成果",
+          "激發學員學習動機"
+        ],
+        speaker_notes: "歡迎大家來到今天的課程。讓我們先了解為什麼這個主題對你的工作如此重要。"
+      },
+      {
+        slide_image: "Placeholder",
+        slide_content: [
+          "第二頁：核心知識概念拆解",
+          "定義關鍵術語與理論基礎",
+          "建立共通語言與理解框架"
+        ],
+        speaker_notes: "這裡我們要深入核心概念。請大家思考：這個概念和你目前的工作流程有什麼關聯？"
+      },
+      {
+        slide_image: "Placeholder",
+        slide_content: [
+          "第三頁：實務案例與情境應用",
+          "解析真實場景中的挑戰與解法",
+          "展示前後對比與關鍵洞察"
+        ],
+        speaker_notes: "讓我們來看一個具體案例。這個情境是否讓你想起自己曾經遇過的類似狀況？"
+      },
+      {
+        slide_image: "Placeholder",
+        slide_content: [
+          "第四頁：總結與行動要點",
+          "回顧三大關鍵收穫",
+          "訂定下一步實踐計畫"
+        ],
+        speaker_notes: "課程即將結束。讓我們快速回顧今天學到的重點，並為自己設定一個小目標。"
+      }
+    ]
+  };
+
+  let data = defaultData;
+  let currentIdx = 0;
+  let showAll = false;
+
+  // Try to load output.json generated by the notebook cell
+  fetch('output.json')
+    .then(r => { if (!r.ok) throw new Error('no output.json'); return r.json(); })
+    .then(j => {
+      // Accept either {slides:[...]} or raw LessonBlueprint object
+      if (j.slides) data = j;
+      else if (Array.isArray(j)) data = { slides: j };
+      else if (j.slides === undefined && j.slide_content) data = { slides: [j] };
+      render();
+    })
+    .catch(() => render());
+
+  // ================================================================
+  // 2. Render
+  // ================================================================
+  function render() {
+    const container = document.getElementById('slides-container');
+    container.innerHTML = '';
+    const total = data.slides.length;
+    document.getElementById('total-num').textContent = total;
+
+    data.slides.forEach((slide, idx) => {
+      const el = document.createElement('div');
+      el.className = 'slide-stage';
+      el.dataset.index = idx;
+      if (!showAll) el.style.display = (idx === currentIdx) ? 'flex' : 'none';
+
+      // Decide image slot ratio label
+      // Default 16:9 for full-slide background embedding;
+      // override per-slide if you prefer 4:3 or 1:1 for content images.
+      const ratioLabel = slide.ratio_label || "16:9";
+
+      const bullets = slide.slide_content.map(t => `<li>${escapeHtml(t)}</li>`).join('');
+      const imgHtml = (slide.slide_image && slide.slide_image !== 'Placeholder')
+        ? `<img src="${escapeHtml(slide.slide_image)}" alt="slide image">`
+        : `<div class="placeholder"><span class="icon">🖼️</span>圖片預留區<br>由 slide_image prompt 生成後嵌入</div>`;
+
+      el.innerHTML = `
+        <div class="slide-header">SLIDE ${idx + 1} / ${total}</div>
+        <div class="slide-body">
+          <div class="slide-text">
+            <h2>${escapeHtml(slide.slide_content[0] || '')}</h2>
+            <ul>${bullets.slice(slide.slide_content[0] ? 1 : 0)}</ul>
+          </div>
+          <div class="slide-image-slot">
+            ${imgHtml}
+            <span class="ratio-label">建議比例：${escapeHtml(ratioLabel)}</span>
+          </div>
+        </div>
+        <div class="slide-notes"><strong>Speaker Notes：</strong>${escapeHtml(slide.speaker_notes || '')}</div>
+      `;
+      container.appendChild(el);
+    });
+
+    document.getElementById('page-num').textContent = currentIdx + 1;
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function prevSlide() {
+    if (showAll) return;
+    currentIdx = (currentIdx - 1 + data.slides.length) % data.slides.length;
+    render();
+  }
+  function nextSlide() {
+    if (showAll) return;
+    currentIdx = (currentIdx + 1) % data.slides.length;
+    render();
+  }
+  function toggleAll() {
+    showAll = !showAll;
+    render();
+  }
+</script>
+
+</body>
+</html>

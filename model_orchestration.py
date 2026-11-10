@@ -74,7 +74,7 @@ def _build_config(env: str) -> dict:
          'sub': ChatOllama(model='gpt-oss:120b-cloud',
                            name='sub', temperature=0),
          'master': ChatOllama(model='deepseek-v4-pro:cloud',
-                           name='master', temperature=0, reasoning=True),
+                              name='master', temperature=0, reasoning=True),
          'image_caption': ChatOllama(model='kimi-k2.6:cloud',
                            name='image_caption', temperature=0),
          'image_quality': 'medium'

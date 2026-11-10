@@ -30,11 +30,11 @@ logging.basicConfig(
 logger = logging.getLogger("main process")
 
 
-from src.logic.writers.blueprint import run as run_blueprint
-from src.logic.writers.adaptation import run as run_adaptation
-from src.logic.writers.image import run as run_image
-from src.logic.writers.audio import run as run_tts
-from src.logic.writers.video_gen import run as run_video
+from src.blueprint import run as run_blueprint
+from legacy.v1.adaptation import run as run_adaptation
+from legacy.v1.image import run as run_image
+from legacy.v1.audio import run as run_tts
+from legacy.v1.video_gen import run as run_video
 
 
 def generate_8char_random(str1, str2):
@@ -108,18 +108,20 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     import json
+    from pathlib import Path
 
     from extractors.powerpoint import main as powerpoint_main
     from extractors.pdf import main as pdf_main
+    from extractors.word import main as word_main
 
     from src.path.path_definition import get_project_dir
 
     os.environ['env'] = "DEV"
 
-    filename = r"data/Our Shared Core Values and Code of Conduct_ITG_150122.pdf"
+    filename = r"data/發票報銷工具教學_ITG.pdf"
 
     # student_persona = "台灣的被動電子元件/電感製造商的越南地區新進業務(Sales)，需要拜訪下游製造商來完成業務。使用越南文"
-    student_persona = "台灣的被動電子元件/電感製造商的新進員工"
+    student_persona = "被動電子元件/電感製造商的新進員工"
 
     if filename.endswith("pptx"):
 
@@ -128,6 +130,13 @@ if __name__ == "__main__":
     elif filename.endswith("pdf"):
 
         request_id = pdf_main.run(pdf_path=filename)
+
+    elif filename.endswith("docx"):
+
+        request_id = word_main.run(docx_path=filename)
+
+    else:
+        raise ValueError(f"{Path(filename).suffix} is not supported. QUIT")
 
     print(request_id)
 

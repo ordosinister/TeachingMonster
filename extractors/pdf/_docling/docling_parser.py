@@ -104,6 +104,12 @@ def _to_page_extractions(result: ConversionResult) -> list[PageExtraction]:
                 page_no = max(0, pic.prov[0].page - 1)
         except Exception:
             pass
+
+        image = pic.get_image(doc)
+
+        if image is not None:
+            print("")
+
         desc = str(pic.caption_text) if hasattr(pic, "caption_text") and pic.caption_text else None
         page_images.setdefault(page_no, []).append(
             ExtractedImage(
@@ -155,3 +161,16 @@ class DoclingParser:
             full_text=full_text,
             metadata={"source": pdf_path, "pages_count": len(pages)},
         )
+
+if __name__ == "__main__":
+
+    import os
+
+    from path.path_definition import get_project_dir
+
+
+    docling_parser = DoclingParser()
+
+    pdf_path = os.path.join(get_project_dir(), "data", "5-3-2 Apply New Samples at EIP - Sample Request 240902 1.pdf")
+
+    docling_parser.parse(pdf_path=pdf_path)
